@@ -1,0 +1,11 @@
+C++ port changes:
+* GUI removed
+* Input hardcoded (provisional)
+* Output redirected to console)
+* Notation: [][] -> **
+* Notation: decimal -> standard float (equivalent?)
+* Notation: [,] -> [][]
+* Notation: ! -> not
+* StreamWriter/FileStream are now a single fstream
+* Notation: Array.Sort(x) -> std::sort(std::begin(x), std::end(y)) (-std=c++11 is required)
+    
