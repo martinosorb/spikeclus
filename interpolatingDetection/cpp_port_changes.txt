@@ -1,11 +1,13 @@
 C++ port changes:
+* 2 files (.cpp and .h)    
 * GUI removed
-* Input hardcoded (provisional)
-* Output redirected to console)
-* Notation: [][] -> **
+* GUI output redirected to console
+* Input variables are now hardcoded (provisional)
+* StreamWriter/FileStream are now a single fstreams using std::iostream (<<)
+
+* Notation: declaration [][] -> **
 * Notation: decimal -> standard float (equivalent?)
-* Notation: [,] -> [][]
-* Notation: ! -> not
-* StreamWriter/FileStream are now a single fstream
-* Notation: Array.Sort(x) -> std::sort(std::begin(x), std::end(y)) (-std=c++11 is required)
-    
+* Notation: access [,] -> [][]
+* Notation(c++11): foreach (type x in y) -> for (type x : y)
+* Notation(c++11): Array.Sort(x) -> std::sort(std::begin(x), std::end(x))
+* Notation(optional): ! -> not 

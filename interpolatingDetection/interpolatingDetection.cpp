@@ -2,7 +2,8 @@
 
 namespace SpkDslowFilter {
 
-Detection::Detection() {}   
+Detection::Detection() {
+}   
 
 int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
     dfTI = new int[3];
@@ -368,14 +369,16 @@ int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, i
     }
     return dfTI;
 }
-
-static std::ofstream w; //for spikes
-static std::ofstream wShapes; //for raw data
-static std::ofstream wX; //for spikes
-static std::ofstream wShapesX; //for raw data
-static std::ofstream wInfo; //for other stuff
-static std::ofstream wMean; //for avg. Voltage
-        
+      
+void openFiles(const std::string& name) {
+    w.open(name + "_Spikes"); // For spikes
+    wShapes.open(name + "_Shapes"); // For raw data
+    wX.open(name + "_SpikesX"); // For spikes
+    wShapesX.open(name + "_ShapesX"); // For raw data
+    wInfo.open(name + "_Info"); // For other stuff
+    wMean.open(name + "_Avg"); // For avg. Voltage
+}
+       
 void AvgVoltageDefault(short** vm, long t0, int t) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
@@ -880,46 +883,43 @@ void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, 
     wMean.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     //write some info
     
-    wInfo << "# Number of frames:" << nFrames/dfAbs << "\n";
-    
-    // ...    
-    wInfo.WriteLine("# Number of frames:\n{0}", nFrames/dfAbs);
-    wInfo.WriteLine("# Duration (s):\n{0}", nSec);
-    wInfo.WriteLine("# Sampling rate:\n{0}", sfd/dfAbs);
-    wInfo.WriteLine("# Threshold scaling:\n{0}", AmpScale);
-    wInfo.WriteLine("# Amplitude scaling:\n{0}", Ascale);
-    wInfo.WriteLine("# Detection threshold*{0}:\n{1}", AmpScale, threshold);
-    wInfo.WriteLine("# Repolarization threshold*{0}:\n{1}", AmpScale, AHPthr);
-    wInfo.WriteLine("# Recalibration trigger:\n{0}", recalibTrigger);
-    wInfo.WriteLine("# Cutouts:\n{0} {1} {2} {3} {4}", CutPre, CutPost, tCut, tCutLong, df);
-    wInfo.WriteLine("# Smoothing window (detection):\n{0}", tSmth);
-    wInfo.WriteLine("# Smoothing window (amplitudes):\n{0}", Lspike);
-    wInfo.WriteLine ("# Recording channels:");
+    wInfo << "# Number of frames:\n" << nFrames/dfAbs << "\n";
+    wInfo << "# Duration (s):\n" << nSec << "\n";
+    wInfo << "# Sampling rate:\n" << sfd/dfAbs  << "\n";
+    wInfo << "# Threshold scaling:\n", AmpScale << "\n";
+    wInfo << "# Amplitude scaling:\n", Ascale << "\n";
+    wInfo << "# Detection threshold*\n" << AmpScale << "\n" << threshold << "\n";
+    wInfo << "# Repolarization threshold*\n" << AmpScale << "\n" << AHPthr << "\n";
+    wInfo << "# Recalibration trigger:\n" << recalibTrigger << "\n";
+    wInfo << "# Cutouts:\n" << CutPre << " " << CutPost << " " << tCut << " " << tCutLong << " " << df << "\n";
+    wInfo << "# Smoothing window (detection):\n" << tSmth << "\n";
+    wInfo << "# Smoothing window (amplitudes):\n" << Lspike << "\n";
+    wInfo << "# Recording channels:\n";
     for (int i=0; i<Indices.Length; i++) {
-        wInfo.WriteLine ("{0}", Indices [i]);
+        wInfo << Indices [i] << "\n";
     }
-    wInfo.WriteLine ("# Recording channels4:");
+    wInfo << "# Recording channels4:\n";
     for (int i=0; i<NChannels; i++) {
         for (int j=0; j<4;j++){
-            wInfo.Write("{0} ", ChInd4a[i][j]);
+            wInfo << ChInd4a[i][j] << " ";
         }
         for (int j=0; j<8;j++){
-            wInfo.Write("{0} ", ChInd4b[i][j]);
+            wInfo << ChInd4b[i][j] << " ";
         }
-        wInfo.WriteLine ();
+        wInfo << "\n";
     }
-    wInfo.WriteLine ("# Recording channels5:");
+    wInfo << "# Recording channels5:\n";
     for (int i=0; i<NChannels; i++) {
-        wInfo.Write("{0} ", ChInd5[i]);
+        wInfo << ChInd5[i] << " ";
         for (int j=0; j<4;j++){
-            wInfo.Write("{0} ", ChInd5a[i][j]);
+            wInfo << ChInd5a[i][j] << " ";
         }
         for (int j=0; j<4;j++){
-            wInfo.Write("{0} ", ChInd5b[i][j]);
+            wInfo << ChInd5b[i][j] << " ";
         }
-        wInfo.WriteLine ();
+        wInfo << "\n";
     }
-    wInfo.WriteLine("# Recalibration events:");
+    wInfo << "# Recalibration events:\n";
     int tA;
     //estimate Aglobal
     for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
@@ -981,7 +981,7 @@ void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, 
         //Array.Sort(Slice);
         //Aglobaldiff=Slice[NChannels / 2]-Aglobal;
         //Aglobal=Slice[NChannels / 2];
-        wMean.WriteLine("{0}", Aglobal[tA]);
+        wMean << Aglobal[tA] << "\n";
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
             if (((vm[i][t+2*df]+4)%4096)<10) {
@@ -1006,12 +1006,1162 @@ void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, 
         AglobalSdiff [t + tfiA] = AglobalSdiff [t];
     }
 }
-void skipLastReverse(int skipLast);
-void Iterate(short** vm, long t0);
-void FinishDetection(short** vm, int skipLast);
 
+void skipLastReverse(int skipLast) {
+    if (df < 0) {
+        std::cout << skipLast << std::endl; // endl flushes the output
+        //ti -= skipLast;
+        tx -= skipLast;
+        tm -= skipLast;
+        tms -= skipLast;
+        ti -= skipLast;
+        skipLast = 0;
+    } else {
+        tf -= skipLast;
+        ty -= skipLast;
+    }
+}
+
+void Iterate(short** vm, long t0) {
+    //int qq;
+    int a4;//to buffer the difference between ADC counts and Qm
+    int a5;//to buffer the difference between ADC counts and Qm
+    int b;
+    //int[] ChS4 = new int[4];
+    //int[] ChS5 = new int[4];
+    int ChS4Min;
+    int ChS5Min;
+    int tA;
+    //shift Aglobal entries
+    for (int t=tx/ dfAbs; dfSign*t<tm/df; t+=dfSign) {
+        Aglobal [t] = Aglobal [t + tfiA];
+        Aglobaldiff [t] = Aglobaldiff [t + tfiA];
+    }
+    for (int t=tx/ dfAbs; dfSign*t<tms/df; t+=dfSign) {
+        AglobalSmth [t] = AglobalSmth [t + tfiA];
+        AglobalSdiff [t] = AglobalSdiff [t + tfiA];
+    }
+    //new Aglobal entries
+    for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
+        tA = t / dfAbs;
+        for (int i=1; i<NChannels; i++) {//loop across channels
+            Slice[i]=(vm [i][t])%4095+(vm[i][t+df])%4095;
+        }
+        Array.Sort(Slice);
+        Aglobal[tA]=Slice[NChannels / 2];
+        Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
+        AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
+        for (int ii=1; ii<tSmth1; ii++) {
+            AglobalSmth [tA+tdSmth1] += Aglobal [tA+tdSmth1 + ii*dfSign];
+        }
+        AglobalSmth [tA+tdSmth1] *= AscaleG;
+        AglobalSdiff[tA+tdSmth1]=AglobalSmth[tA+tdSmth1]-AglobalSmth[t+tdSmth];
+    }
+    //avoid cumulation of numerical errors
+    for (int i=1; i<NChannels; i++) {//loop across channels
+        vSmth [i] = vm [i] [ti - df];
+        for (int ii=0; ii<tSmth1; ii++) {
+            vSmth [i] += vm [i] [ti + ii * df];
+        }
+        vSmth [i] *= AscaleV;
+    }
+    for (int t=ti; dfSign*t<dfSign*tf; t+=df) {//loop over data, will be removed for an online algorithm
+        //Console.Write("{0} ", t+t0);
+        dtPre = dt;
+        dt=(dt+1)%dtMx;
+        dtEx=dtE;
+        dtE=(dtE+1)%dtEMx;
+        tA = t / dfAbs;
+        if ((t0+t)%(2*TauFilt1)==0) {
+            //update Avgs3
+            AvgVoltageDefault (vm, t0, t+TauFiltOffset);
+        }
+        for (int i=1; i<NChannels; i++) {//update vSmth
+            vSmth [i] += (vm [i] [t+ tSmth1 * df]-vm [i] [t - df]) *AscaleV;
+            QmPre[i]=vSmth[i]-AglobalSmth[tA];
+        }
+        ////for (int i=1; i<NChannels; i++) {//loop across channels
+        ////	QmPre[i]=(vm [i][t]+vm[i][t-df]+vm[i][t+df]-Aglobal[tA])*Ascale;
+        ////}
+        //for (int i=1; i<NChannels; i++) {//loop across channels
+        //	QmPre[i]=((vm[i][t-df])%4095+(vm[i][t])%4095+(vm[i][t+df])%4095)*Ascale;
+        //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
+        //	//if (i == 2120) {
+        //	//	Console.WriteLine (QmPreD [i]);
+        //	//}
+        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i][t])%4095+(vm[i][t+df])%4095+(vm[i][t+2*df])%4095);
+        //	//Slice[i]=((vm[i][t-df])%4095+(vm[i][t])%4095+(vm[i][t+df])%4095);
+        //}
+        //Array.Sort(Slice);
+        //if (ACF) {
+        //	Aglobaldiffold = Aglobaldiff;
+        //}
+        //Aglobaldiff=Aglobal[tA+dfSign]-Aglobal[tA-dfSign];
+        //Aglobal=Slice[NChannels / 2];
+        //SqIglobal+=Aglobaldiff[tA]*Aglobaldiff[tA];
+        wMean << Aglobal[tA] << "\n";
+        // RECALIBRATION EVENTS
+        if (recalibTrigger==0){
+            if (vm[0][t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
+                if (Acal > 2000) {
+                    wInfo << (t+t0)/dfAbs;//write time of recalibration event
+                    for (int i=0; i<NChannels; i++) {//loop across channels
+                        if (A[i]==0) {
+                            wInfo << " " << Qd[i];//write variance of recalibration event
+                        }
+                        else {
+                            wInfo << " 0";
+                        }
+                    }
+                    wInfo << "\n";
+                    std::cout << (t+t0)/Sampling/dfAbs) << " sec" << std::endl;// to monitor progress of spike detection                    
+                    Acal=0;//to remember last recalibration event
+                    for (int i=0; i<NChannels; i++) {
+                        FVsbias [i] += FVbias [i];//want to see whether this matches the correlation structure
+                        Vsqbias [i] += (FVbias [i] / 100) * (FVbias [i] / 100);
+                        SqIglobal+=AglobalSdiff[tA]*AglobalSdiff[tA];
+                    }
+                }
+            }
+            Acal++;
+        }
+        else if ((t0+t)%Sampling==0) {//write spikes after every second
+            wInfo << (t+t0)/dfAbs;//write time of recalibration event
+            for (int i=0; i<NChannels; i++) {//loop across channels
+                if (A[i]==0) {
+                    wInfo << " " << Qd[i];//write variance of recalibration event
+                }
+                else {
+                    wInfo << " 0";
+                }
+            }
+            wInfo << "\n";
+            std::cout << (t+t0)/Sampling/dfAbs << " sec" << std::endl;// to monitor progress of spike detection
+        }
+        /*
+        //for testing
+        for (int i=0; i<4096; i++) {
+            Qdiff[i,dt]=0;
+        }
+        for (int i=0; i<24;i++){
+            for (int kkk=0; kkk<9; kkk++){
+                //Console.WriteLine ("{0} {1} {2} {3}", (t+t0)/Sampling,Iseq[(t+t0-i+256)%256]+Inn[kkk],((t+t0-i+256)%256)/16,(t+t0-i+30)%15);
+                Qdiff[Iseq[(t+t0-i+256)%256]+Inn[kkk],dt]=(Iweights[((t+t0-i+256)%256)/16,kkk]*Template[(t+t0-i+256)%16,i])/Ann[(t+t0-i+30)%15]/(-64)*AscaleV/1000;
+            }
+        }
+        */
+        // SPIKE DETECTION
+        for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
+            //CHANNEL OUT OF LINEAR REGIME
+            if (((vm[i][t+df]+4)%4096)<10) {
+                if (A[i]<artT) {//reset only when it starts leaving the linear regime
+                    /*
+                    if (ACF) {
+                        for (int ii=0; ii<Math.Min(artT-A[i],6); ii++) {//is only for one step in the past...ignoring others
+                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm [i] [t + (6 - ii) * df] - vm [i] [t + (3 - ii) * df]) / Ascale;
+                        }
+                    }
+                    */
+                    for (int ij=0; ij<dtMx; ij++) {
+                        Qdiff [i][ij] = 0;
+                    }
+                    A[i]=artT;
+                }
+            }
+            //DEFAULT OPERATIONS
+            else if (A[i]==0) {
+                QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
+                /*
+                if (ACF) {
+                    SqIv [i] += (vm [i] [t + df] - vm [i] [t - 2 * df]) * (vm [i] [t + df] - vm [i] [t - 2 * df]);
+                    for (int iii=-6; iii<7; iii++) {
+                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm [i] [t + (1 + iii) * df] - vm [i] [t - (2 - iii) * df]) / Ascale;
+                        //t-8...t+7
+                    }
+                }
+                */
+                Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
+                //vm[i][t-df]+vm[i][t]+vm[i][t+df]
+                Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
+                if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
+                    if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
+                        FVbias [i]++;
+                    } else {
+                        FVbias [i]--;
+                    }//Qdiff negative-->Ascale!!!;
+                }
+                //FVsbias[i]+=FVbias[i];//want to see whether this matches the correlation structure
+                //Vsqbias[i]+=FVbias[i]*FVbias[i]/1000;
+                //UPDATE Qm and Qd
+                if (Qdiff[i][dt]>0) {
+                    if (Qdiff[i][dt]>Qd[i]) {
+                        Qm[i]+=Qd[i]/Tau_m0;
+                        if  (Qdiff[i][dt]<(5*Qd[i])) {
+                            Qd[i]++;
+                        }
+                        else if ((Qd[i]>Qdmin) & (Qdiff[i][dt]>(6*Qd[i]))) {
+                            Qd[i]--;
+                        }
+                    }
+                    else if (Qd[i]>Qdmin){//set a minimum level for Qd
+                        Qd[i]--;
+                    }
+                }
+                else if (Qdiff[i][dt]<-Qd[i]){
+                    Qm[i]-=Qd[i]/Tau_m0/2;
+                }
+            }
+            //AFTER CHANNEL WAS OUT OF LINEAR REGIME
+            else {
+                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i][t-df]+vm[i][t]+vm[i][t+df]
+                if (A [i] == artT) {
+                    QmPreD[i] = 0;
+                }
+                A[i]--;
+            }
+            //do above
+            if (Qdiff [i][ dt] * AmpScale > Qmax [i][dtPre]) {
+                Qmax [i][dt] = Qdiff [i][dt] * AmpScale;//overflow issues?
+                QmaxE [i] = dtE;
+            } else if (dtE == QmaxE [i]) {
+                if (Qdiff [i][dt] > Qdiff [i][dtPre]) {
+                    Qmax [i][dt] = Qdiff [i][dt] * AmpScale;//overflow issues?
+                    //QmaxE [i] = dtE;//redundant
+                } else {
+                    Qmax [i][dt] = Qdiff [i][dtPre] * AmpScale;//overflow issues?
+                    QmaxE [i] = dtEx;
+                }
+            } else {
+                Qmax [i][dt] = Qmax [i][dtPre];
+                /*
+                //thresholding
+                if ((QmaxE [i] / Qd [i]) > (threshold - 2)) {
+                    for (int ii=0; ii<4; ii++) {
+                        if (ChInd5c [i] [ii] > -1) {
+                            T4 [ChInd5c [i] [ii]] = true;
+                        }
+                        if ((QmaxE [i] / Qd [i]) > (threshold - 2)) {
+                        }
+                    }
+                }
+                */
+            }
+            //Qmax[i,dt]=Math.Max((Qdiff[i,(dt+1)%2],Qdiff[i,dt]);
+        }
+        foreach (int i in ChInd4List) {//loop across channels
+            if (Sl4[i]>0) {//Sl frames after peak value
+                ChS4Min = 0;
+                a4=0;
+                for (int ii=1; ii<4; ii++) {
+                    if (A[ChInd4a[i][ii]]==0){
+                        if (Qmax [ChInd4a[i][ChS4Min],dt]/Qd [ChInd4a[i][ChS4Min]] > Qmax [ChInd4a[i][ii],dt]/Qd [ChInd4a[i][ii]]){
+                        //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
+                            a4 += Qmax [ChInd4a[i][ChS4Min],dt]/ Qd [ChInd4a[i][ChS4Min]];
+                            ChS4Min = ii;
+                        }
+                        else {
+                            a4 += Qmax [ChInd4a[i][ii],dt]/ Qd [ChInd4a[i][ii]];
+                        }
+                    }
+                }
+                a4 /= 3;
+                //default
+                Sl4[i]=(Sl4[i]+1)%(Slmax+1);// increment Sl[i]
+                //check whether it repolarizes
+                if (a4>AHPthr) {
+                    AHP4[i]=true;
+                }
+                if (Sl4[i]==(Slmax-Sln0)){
+                    for (int ii=0; ii<4;ii++) {
+                        if (ChInd5a[i][ii]>-1){
+                            if (ChInd5a[i][ii]<ChInd4a[i][0]){//have updated Sl4 already
+                                if (Sl4[ChInd5a[i][ii]]>(Slmax-2*Sln0)){
+                                    if (Amp4[ChInd5a[i][ii]]<Amp4[i]){
+                                        Sl4x[ChInd5a[i][ii]]=true;
+                                    }
+                                }
+                            }
+                            else {
+                                if ((Sl4[ChInd5a[i][ii]]>(Slmax-2*Sln0-1)) & (Sl4[ChInd5a[i][ii]]<(Slmax-1))){
+                                    if (Amp4[ChInd5a[i][ii]]<Amp4[i]){
+                                        Sl4x[ChInd5a[i][ii]]=true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (int ii=0; ii<4;ii++) {
+                        if (ChInd4c[i][ii]>-1){
+                            if ((Sl5[ChInd4c[i][ii]]>(Slmax-2*Sln0-1)) & (Sl5[ChInd4c[i][ii]]<(Slmax-1))){
+                                if (Amp5[ChInd4c[i][ii]]<Amp4[i]){
+                                    Sl5x[ChInd4c[i][ii]]=true;
+                                }
+                            }
+                        }
+                    }
+                }
+                //accept spikes after Slmax frames if...
+                if ((Sl4[i]==Slmax) & (!Sl4x[i])) {// & (AHP4[i]<(Slmax-Slmin))
+                    if (AHP4[i]) {
+                        wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
+                        NSpikes4++;//to count spikes
+                        foreach (int ch in ChInd4a[i]){
+                            for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                            }
+                            //compute baseline
+                            for (int kk=0; kk<tQm0; kk++){
+                                tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                            }
+                            for (int kk=tQm0; kk<tQmf; kk++){
+                                tQmA[kk]=tShape[tQmX[kk]];
+                            }
+                            Array.Sort (tQmA);
+                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            //compute max. amplitude above baseline
+                            Lmx = Lsw*b;
+                            for (int kk=Li; kk<Lf;kk++){
+                                Lm = Lw [0] * tShape [kk];
+                                for (int kkk=1; kkk<Lspike; kkk++) {
+                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                }
+                                if (Lm<Lmx){
+                                    Lmx=Lm;
+                                }
+                            }
+                            wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            for (int jj=0; jj<tCut; jj++){
+                                wShapesX << tShape[jj] << " ";
+                            }
+                        }
+                        for (int ch : ChInd4b[i]){
+                            if (ch>-1){
+                                for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                }
+                                //compute baseline
+                                for (int kk=0; kk<tQm0; kk++){
+                                    tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                                }
+                                for (int kk=tQm0; kk<tQmf; kk++){
+                                    tQmA[kk]=tShape[tQmX[kk]];
+                                }
+                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                //compute max. amplitude above baseline
+                                Lmx = Lsw*b;
+                                for (int kk=Li; kk<Lf;kk++){
+                                    Lm = Lw [0] * tShape [kk];
+                                    for (int kkk=1; kkk<Lspike; kkk++) {
+                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                    }
+                                    if (Lm<Lmx){
+                                        Lmx=Lm;
+                                    }
+                                }
+                                wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                                /*
+                                for (int jj=0; jj<tCut; jj++){
+                                    wShapesX.Write("{0} ",  tShape[jj]);
+                                }
+                                */
+                            }
+                            else {
+                                wShapesX << ch << " " << 0 << " " << 0 << " " << 0 << " ";
+                                /*
+                                for (int jj=0; jj<tCut; jj++){
+                                    wShapesX.Write("0 ");
+                                }
+                                */
+                            }
+                        }
+                    }
+                    else {
+                        wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
+                        NSpikes4++;//to count spikes
+                        for (int ch : ChInd4a[i]){
+                            for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                            }
+                            //compute baseline
+                            for (int kk=0; kk<tQm0; kk++){
+                                tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                            }
+                            for (int kk=tQm0; kk<tQmf; kk++){
+                                tQmA[kk]=tShape[tQmXLong[kk]];
+                            }
+                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            //compute max. amplitude above baseline
+                            Lmx = Lsw*b;
+                            for (int kk=Li; kk<Lf;kk++){
+                                Lm = Lw [0] * tShape [kk];
+                                for (int kkk=1; kkk<Lspike; kkk++) {
+                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                }
+                                if (Lm<Lmx){
+                                    Lmx=Lm;
+                                }
+                            }
+                            wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            for (int jj=0; jj<tCutLong; jj++){
+                                wShapesX << tShape[jj] << " ";
+                            }
+                        }
+                        for (int ch : ChInd4b[i]){
+                            if (ch>-1){
+                                for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                }
+                                //compute baseline
+                                for (int kk=0; kk<tQm0; kk++){
+                                    tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                                }
+                                for (int kk=tQm0; kk<tQmf; kk++){
+                                    tQmA[kk]=tShape[tQmXLong[kk]];
+                                }
+                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                //compute max. amplitude above baseline
+                                Lmx = Lsw*b;
+                                for (int kk=Li; kk<Lf;kk++){
+                                    Lm = Lw [0] * tShape [kk];
+                                    for (int kkk=1; kkk<Lspike; kkk++) {
+                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                    }
+                                    if (Lm<Lmx){
+                                        Lmx=Lm;
+                                    }
+                                }
+                                wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx  << " ";
+                                /*
+                                for (int jj=0; jj<tCutLong; jj++){
+                                    wShapesX.Write("{0} ", tShape[jj]);
+                                }
+                                */
+                            }
+                            else {
+                                wShapesX << ch  << " " << 0  << " " << 0  << " " << 0  << " ";
+                                /*
+                                for (int jj=0; jj<tCutLong; jj++){
+                                    wShapesX.Write("0 ");
+                                }
+                                */
+                            }
+                        }
+                    }
+                    wShapesX << "\n";
+                    Sl4[i]=0;
+                }
+                //check whether current ADC count is higher
+                else if (Amp4[i]<a4) {
+                    Sl4[i]=1;//reset peak value
+                    Sl4x[i]=false;
+                    Amp4[i]=a4;
+                    AHP4[i]=false;//reset AHP
+                }
+            }
+            //}
+            //else if (ChInd4a[i][0]>-1){//should rather make a list for that
+            //want one step to decide whichelectrodes to look at; have to do for whole array on single electrodes.
+            //if (Math.Max(Math.Min(Qmax[ChInd4a[i][0],dt],Qmax[ChInd4a[i][3],dt]),Math.Min(Qmax[ChInd4a[i][1],dt],Qmax[ChInd4a[i][2],dt]))>(2000*AmpScale)){
+            else if (Z4next[i]==0) {
+                ChS4Min = 0;
+                a4 = 0;
+                for (int ii=1; ii<4; ii++) {
+                    if (A [ChInd4a [i] [ii]] == 0) {
+                        if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
+                            //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
+                            a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
+                            ChS4Min = ii;
+                        } else {
+                            a4 += Qmax [ChInd4a [i] [ii]][dt] / Qd [ChInd4a [i] [ii]];
+                        }
+                    }
+                }
+                a4 /= 3;
+                //check for threshold crossings
+                if (a4 > threshold) {
+                    Sl4 [i] = 1;
+                    Sl4x [i] = false;
+                    Amp4 [i] = a4;
+                    AHP4 [i] = false;
+                } else if (a4 < threshold-2*AmpScale) {
+                    Z4next[i] = dtTMx;
+                }
+            } else if (Z4next[i]==1) {//check for previous one as well
+                Z4next[i] --;
+                ChS4Min = 0;
+                a4 = 0;
+                for (int ii=1; ii<4; ii++) {
+                    if (A [ChInd4a [i] [ii]] == 0) {
+                        if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
+                            //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
+                            a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
+                            ChS4Min = ii;
+                        } else {
+                            a4 += Qmax [ChInd4a [i] [ii]][dt] / Qd [ChInd4a [i] [ii]];
+                        }
+                    }
+                }
+                a4 /= 3;
+                //check for previous threshold crossing
+                if (a4 > threshold) {
+                    Sl4 [i] = 1;
+                    Sl4x [i] = false;
+                    Amp4 [i] = a4;
+                    AHP4 [i] = false;
+                    ChS4Min = 0;
+                    a4 = 0;
+                    for (int ii=1; ii<4; ii++) {
+                        if (A [ChInd4a [i] [ii]] == 0) {
+                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]]) {
+                                //if (Qmax [ChInd4a[i][ChS4Min],dtPre] > Qmax [ChInd4a[i][ii],dtPre]) {
+                                a4 += Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]];
+                                ChS4Min = ii;
+                            } else {
+                                a4 += Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]];
+                            }
+                        }
+                    }
+                    a4 /= 3;
+                    //check whether previous ADC count is higher
+                    if (Amp4 [i] < a4) {
+                        Sl4 [i] = 2;//reset peak value;
+                        Amp4 [i] = a4;
+                    }
+                } else if (a4 < threshold -2*AmpScale) {
+                    Z4next [i] = dtTMx;
+                }
+                //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
+                else {
+                    ChS4Min = 0;
+                    a4 = 0;
+                    for (int ii=1; ii<4; ii++) {
+                        if (A [ChInd4a [i] [ii]] == 0) {
+                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii], dtPre] / Qd [ChInd4a [i] [ii]]) {
+                                //if (Qmax [ChInd4a[i][ChS4Min],dtPre] > Qmax [ChInd4a[i][ii],dtPre]) {
+                                a4 += Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]];
+                                ChS4Min = ii;
+                            } else {
+                                a4 += Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]];
+                            }
+                        }
+                    }
+                    a4 /= 3;
+                    if (a4 > threshold) {
+                        Sl4 [i] = 2;
+                        Sl4x [i] = false;
+                        Amp4 [i] = a4;
+                        AHP4 [i] = false;
+                    }
+                }
+            } else {
+                Z4next[i] --;
+            }
+            //}
+        }
+        for (int i : ChInd5List) {//loop across channels
+            if (Sl5[i]>0) {//Sl frames after peak value
+                ChS5Min = Qmax [ChInd5a[i][0]][dt]/Qd [ChInd5a[i][0]];
+                a5=0;
+                for (int ii=1; ii<4; ii++) {
+                    if (ChS5Min < Qmax [ChInd5a[i][ii]][dt]/Qd [ChInd5a[i][ii]]) {
+                        a5 += Qmax [ChInd5a[i][ii]][dt] / Qd [ChInd5a[i][ii]];
+                    }
+                    else {
+                        a5 += ChS5Min;
+                        ChS5Min=Qmax [ChInd5a[i][ii]][dt] / Qd [ChInd5a[i][ii]];
+                    }
+                }
+                a5+=4*Qmax[ChInd5[i],dt]/ Qd [ChInd5[i]];
+                a5 /= 7;
+                //TREATMENT OF THRESHOLD CROSSINGS
+                //default
+                Sl5[i]=(Sl5[i]+1)%(Slmax+1);// increment Sl[i]
+                //check whether it doesn't repolarize
+                if (a5<AHPthr) {
+                    AHP5[i]=true;
+                }
+                if ((Sl5[i]==(Slmax-Sln0))){
+                    for (int ii=0; ii<4;ii++) {
+                        if (ChInd5a[i][ii]<ChInd5[i]){//have updated Sl5 already
+                            if (Sl5[ChInd5a[i][ii]]>(Slmax-2*Sln0)){
+                                if (Amp5[ChInd5a[i][ii]]<Amp5[i]){
+                                    Sl5x[ChInd5a[i][ii]]=true;
+                                }
+                            }
+                        }
+                        else {
+                            if ((Sl5[ChInd5a[i][ii]]>(Slmax-2*Sln0-1)) & (Sl5[ChInd5a[i][ii]]<(Slmax-1))){
+                                if (Amp5[ChInd5a[i][ii]]<Amp5[i]){
+                                    Sl5x[ChInd5a[i][ii]]=true;
+                                }
+                            }
+                        }
+                    }
+                    for (int ii=0; ii<4;ii++) {
+                        if (ChInd5c[i][ii]>-1) {
+                            if (Sl4[ChInd5c[i][ii]]>(Slmax-2*Sln0)){//have updated Sl4 already
+                                if (Amp4[ChInd5c[i][ii]]<Amp5[i]){
+                                    Sl4x[ChInd5c[i][ii]]=true;
+                                }
+                            }
+                        }
+                    }
+                }
+                //accept spikes after Slmax frames if...
+                if ((Sl5[i]==Slmax) & (!Sl5x[i])) {
+                    if (AHP5[i]) {
+                        w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
+                        NSpikes5++;//to count spikes
+                        for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                        }
+                        //compute baseline
+                        for (int kk=0; kk<tQm0; kk++){
+                            tQmA[kk]=(QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale;
+                        }
+                        for (int kk=tQm0; kk<tQmf; kk++){
+                            tQmA[kk]=tShape[tQmX[kk]];
+                        }
+                        std::sort(std::begin(tQmA), std::end(tQmA));
+                        b = tQmA [tQmm]+tQmA [tQmm+1];
+                        //compute max. amplitude above baseline
+                        Lmx = Lsw*b;
+                        for (int kk=Li; kk<Lf;kk++){
+                            Lm = Lw [0] * tShape [kk];
+                            for (int kkk=1; kkk<Lspike; kkk++) {
+                                Lm += Lw [kkk] * tShape [kkk+kk];
+                            }
+                            if (Lm<Lmx){
+                                Lmx=Lm;
+                            }
+                        }
+                        wShapes << ChInd5[i] << " " << ((QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale) << " " << b << " " << Lmx << " ";
+                        for (int jj=0; jj<tCut; jj++){
+                            wShapes << tShape[jj] << " ";
+                        }
+                        for (int ch : ChInd5a[i]){
+                            for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                            }
+                            //compute baseline
+                            for (int kk=0; kk<tQm0; kk++){
+                                tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                            }
+                            for (int kk=tQm0; kk<tQmf; kk++){
+                                tQmA[kk]=tShape[tQmX[kk]];
+                            }
+                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            //compute max. amplitude above baseline
+                            Lmx = Lsw*b;
+                            for (int kk=Li; kk<Lf;kk++){
+                                Lm = Lw [0] * tShape [kk];
+                                for (int kkk=1; kkk<Lspike; kkk++) {
+                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                }
+                                if (Lm<Lmx){
+                                    Lmx=Lm;
+                                }
+                            }
+                            wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            for (int jj=0; jj<tCut; jj++){
+                                wShapes << tShape[jj] << " ";
+                            }
+                        }
+                        for (int ch : ChInd5b[i]){
+                            if (ch>-1){
+                                for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                }
+                                //compute baseline
+                                for (int kk=0; kk<tQm0; kk++){
+                                    tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                                }
+                                for (int kk=tQm0; kk<tQmf; kk++){
+                                    tQmA[kk]=tShape[tQmX[kk]];
+                                }
+                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                //compute max. amplitude above baseline
+                                Lmx = Lsw*b;
+                                for (int kk=Li; kk<Lf;kk++){
+                                    Lm = Lw [0] * tShape [kk];
+                                    for (int kkk=1; kkk<Lspike; kkk++) {
+                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                    }
+                                    if (Lm<Lmx){
+                                        Lmx=Lm;
+                                    }
+                                }
+                                wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                                /*
+                                for (int jj=0; jj<tCut; jj++){
+                                    wShapes.Write("{0} ", tShape[jj]);
+                                }
+                                */
+                            }
+                            else {
+                                wShapes << ch << " " << 0 << " " << 0 << " " << 0 << " ";
+                                /*
+                                for (int jj=0; jj<tCut; jj++){
+                                    wShapes.Write("0 ");
+                                }
+                                */
+                            }
+                        }
+                    }
+                    else {
+                        w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
+                        NSpikes5++;//to count spikes
+                        for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                        }
+                        //compute baseline
+                        for (int kk=0; kk<tQm0; kk++){
+                            tQmA[kk]=(QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale;
+                        }
+                        for (int kk=tQm0; kk<tQmf; kk++){
+                            tQmA[kk]=tShape[tQmXLong[kk]];
+                        }
+                        std::sort(std::begin(tQmA), std::end(tQmA));
+                        b = tQmA [tQmm]+tQmA [tQmm+1];
+                        //compute max. amplitude above baseline
+                        Lmx = Lsw*b;
+                        for (int kk=Li; kk<Lf;kk++){
+                            Lm = Lw [0] * tShape [kk];
+                            for (int kkk=1; kkk<Lspike; kkk++) {
+                                Lm += Lw [kkk] * tShape [kkk+kk];
+                            }
+                            if (Lm<Lmx){
+                                Lmx=Lm;
+                            }
+                        }
+                        wShapes << ChInd5[i] << " " << ((QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale << " " << b << " " << Lmx << " ";
+                        for (int jj=0; jj<tCutLong; jj++){
+                            wShapes << tShape[jj] << " ";
+                        }
+                        for (int ch : ChInd5a[i]){
+                            for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                            }
+                            //compute baseline
+                            for (int kk=0; kk<tQm0; kk++){
+                                tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                            }
+                            for (int kk=tQm0; kk<tQmf; kk++){
+                                tQmA[kk]=tShape[tQmXLong[kk]];
+                            }
+                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            //compute max. amplitude above baseline
+                            Lmx = Lsw*b;
+                            for (int kk=Li; kk<Lf;kk++){
+                                Lm = Lw [0] * tShape [kk];
+                                for (int kkk=1; kkk<Lspike; kkk++) {
+                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                }
+                                if (Lm<Lmx){
+                                    Lmx=Lm;
+                                }
+                            }
+                            wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                            for (int jj=0; jj<tCutLong; jj++){
+                                wShapes << tShape[jj] << " ";
+                            }
+                        }
+                        for (int ch : ChInd5b[i]){
+                            if (ch>-1){
+                                for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                }
+                                //compute baseline
+                                for (int kk=0; kk<tQm0; kk++){
+                                    tQmA[kk]=(QmPreD[ch]-Qm[ch])*2/Ascale;
+                                }
+                                for (int kk=tQm0; kk<tQmf; kk++){
+                                    tQmA[kk]=tShape[tQmXLong[kk]];
+                                }
+                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                //compute max. amplitude above baseline
+                                Lmx = Lsw*b;
+                                for (int kk=Li; kk<Lf;kk++){
+                                    Lm = Lw [0] * tShape [kk];
+                                    for (int kkk=1; kkk<Lspike; kkk++) {
+                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                    }
+                                    if (Lm<Lmx){
+                                        Lmx=Lm;
+                                    }
+                                }
+                                wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                                /*
+                                for (int jj=0; jj<tCutLong; jj++){
+                                    wShapes.Write("{0} ", tShape[jj]);
+                                }
+                                */
+                            }
+                            else {
+                                wShapes << ch << " " << 0 << " " << 0 << " " << 0 << " ";
+                                /*
+                                for (int jj=0; jj<tCutLong; jj++){
+                                    wShapes.Write("0 ");
+                                }
+                                */
+                            }
+                        }
+                    }
+                    wShapes << "\n";
+                    Sl5[i]=0;
+                }
+                //check whether current ADC count is higher
+                else if (Amp5[i]<a5) {
+                    Sl5[i]=1;//reset peak value
+                    Sl5x[i]=false;
+                    Amp5[i]=a5;
+                    AHP5[i]=false;//reset AHP
+                }
+                //}
+            }
+            //else if (ChInd5[i]>-1){
+            //if (Qmax[ChInd5[i],dt]>(thr5*Qd[i])){
+            else if (Z5next [i] == 0) {
+                ChS5Min = Qmax [ChInd5a [i] [0]][dt] / Qd [ChInd5a [i] [0]];
+                a5 = 0;
+                for (int ii=1; ii<4; ii++) {
+                    if (ChS5Min < Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]]) {
+                        a5 += Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    } else {
+                        a5 += ChS5Min;
+                        ChS5Min = Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    }
+                }
+                a5 += 4 * Qmax [ChInd5 [i]][dt] / Qd [ChInd5 [i]];
+                a5 /= 7;
+                //check for threshold crossings
+                if (a5 > threshold) {
+                    Sl5 [i] = 1;
+                    Sl5x [i] = false;
+                    Amp5 [i] = a5;
+                    AHP5 [i] = false;
+                } else if (a5 < threshold -2*AmpScale) {
+                    Z5next [i] = dtTMx;
+                }
+            } else if (Z5next [i] == 1) {//check for previous one as well
+                Z5next [i] --;
+                ChS5Min = Qmax [ChInd5a [i] [0]][dt] / Qd [ChInd5a [i] [0]];
+                a5 = 0;
+                for (int ii=1; ii<4; ii++) {
+                    if (ChS5Min < Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]]) {
+                        a5 += Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    } else {
+                        a5 += ChS5Min;
+                        ChS5Min = Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    }
+                }
+                a5 += 4 * Qmax [ChInd5 [i]][dt] / Qd [ChInd5 [i]];
+                a5 /= 7;
+                //check for previous threshold crossing
+                if (a5 > threshold) {
+                    Sl5 [i] = 1;
+                    Sl5x [i] = false;
+                    Amp5 [i] = a5;
+                    AHP5 [i] = false;
+                    ChS5Min = Qmax [ChInd5a [i] [0]][dtPre] / Qd [ChInd5a [i] [0]];
+                    a5 = 0;
+                    for (int ii=1; ii<4; ii++) {
+                        if (ChS5Min < Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]]) {
+                            a5 += Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        } else {
+                            a5 += ChS5Min;
+                            ChS5Min = Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        }
+                    }
+                    a5 += 4 * Qmax [ChInd5 [i]][dtPre] / Qd [ChInd5 [i]];
+                    a5 /= 7;
+                    //check for previous threshold crossing
+                    if (Amp5 [i] < a5) {
+                        Sl5 [i] = 2;
+                        Amp5 [i] = a5;
+                    }
+                } else if (a5 < threshold -2*AmpScale) {
+                    Z5next [i] = dtTMx;
+                }
+                //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
+                else {
+                    ChS5Min = Qmax [ChInd5a [i] [0]][dtPre] / Qd [ChInd5a [i] [0]];
+                    a5 = 0;
+                    for (int ii=1; ii<4; ii++) {
+                        if (ChS5Min < Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]]) {
+                            a5 += Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        } else {
+                            a5 += ChS5Min;
+                            ChS5Min = Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        }
+                    }
+                    a5 += 4 * Qmax [ChInd5 [i]][dtPre] / Qd [ChInd5 [i]];
+                    a5 /= 7;
+                    //check for previous threshold crossing
+                    if (a5 > threshold) {
+                        Sl5 [i] = 2;
+                        Sl5x [i] = false;
+                        Amp5 [i] = a5;
+                        AHP5 [i] = false;
+                    }
+                }
+            } else {
+                Z5next[i] --;
+            }
+            //}
+        }
+    }
+}
+
+void FinishDetection(short** vm, int skipLast);
+    if (df > 0) {
+        for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
+            for (int i=1; i<NChannels; i++) {//loop across channels
+                Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
+            }
+            std::sort(std::begin(Slice), std::end(slice));
+            wMean << Slice [NChannels / 2] << "\n";
+        }
+    } else {
+        for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
+            for (int i=1; i<NChannels; i++) {//loop across channels
+                Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
+            }
+            std::sort(std::begin(Slice), std::end(slice));
+            wMean << Slice [NChannels / 2] << "\n";
+        }
+    }
+    wMean << Slice [NChannels / 2] << "\n";
+    wInfo << "#Sum(squared global fluctuations):\n";
+    wInfo << SqIglobal << "\n";
+    if (ACF) {
+        wInfo << "#Sum(squared channel fluctuations):\n";
+        for (int i=0; i<NChannels; i++) {//loop across channels
+            wInfo << SqIv[i] << " ";
+        }
+        wInfo << "\n";
+        wInfo << "#Sum(product of channel and global fluctuations):\n";
+        for (int ii=0; ii<13; ii++) {//loop across timelags
+            for (int i=0; i<NChannels; i++) {//loop across channels
+                wInfo << SIprod [i, ii] << " ";
+            }
+            wInfo << "\n";
+        }
+    }
+    wInfo << "#Sum(avg. deviations from global fluctuations):\n";
+    for (int i=0; i<NChannels; i++) {//loop across channels
+        wInfo << FVsbias[i] << " ";
+    }
+    wInfo << "\n";
+    wInfo << "#Sum(avg. squared deviations from global fluctuations):\n";
+    for (int i=0; i<NChannels; i++) {//loop across channels
+        wInfo << Vsqbias[i] << " ";
+    }
+    wInfo << "\n";
+    wInfo << "#Number of spikes (4 channel):\n");
+    wInfo << NSpikes4 << "\n";//to count spikes
+    wInfo << "#Number of spikes (5 channel):\n");
+    wInfo << NSpikes5 << "\n";//to count spikes
+
+    w.close();
+    wShapes.close();
+    wX.close();
+    wShapesX.close();
+    wInfo.close();
+    wMean.close();
 }
 
 int main(int argc,  char** argv) {
-    
+    // Initialize an instance of the BrwRdr class
+    BrwRdr brwRdr = new BrwRdr ();
+    // you must use a valid full file path
+
+    // Create and display a fileChooserDialog
+    OpenFileDialog openFileDialog1 = new OpenFileDialog ();
+    //openFileDialog1.InitialDirectory = "c:\\";
+    openFileDialog1.Filter = "brw files (*.brw)|*.brw|All files (*.*)|*.*";
+    openFileDialog1.FilterIndex = 1;
+    openFileDialog1.RestoreDirectory = true;
+    openFileDialog1.InitialDirectory = Directory.GetCurrentDirectory ();
+
+    if (openFileDialog1.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    // Open the file for reading.
+    brwRdr.Open (openFileDialog1.FileName);
+    // the number of frames of the recording
+    long nFrames = brwRdr.RecNFrames;
+    // the duration in seconds of the recording
+    double nSec = brwRdr.RecDuration / 1000;
+    // the sampling frequency
+    double sfd = (double)brwRdr.SamplingRate;
+    int sf = (int)sfd;
+    Console.WriteLine ("# Number of frames: {0}", nFrames);
+    Console.WriteLine ("# Duration (s): {0}", nSec);
+    Console.WriteLine ("# Sampling rate: {0}", sfd);
+
+    //list of channels
+    ChCoord[] Channels = brwRdr.GetRecChs (StreamType.Raw);
+    Console.WriteLine ("# Number of recorded channels: {0}", Channels.Length);
+    int[] Indices = new int[Channels.Length];
+    for (int i=0; i<Channels.Length; i++) {
+        Indices [i] = (Channels [i].Col - 1) + 64 * (Channels [i].Row - 1);
+        Console.WriteLine ("{0}", Indices [i]);
+    }
+    // how many frames to analyze
+    //long nDumpFrames = nFrames;
+    Detection SpkD;
+    SpkD = new Detection ();
+
+    //set initial parameter
+    int[] dfTI = SpkD.SetInitialParams (nFrames, nSec, sf, sfd, Channels.Length, Indices);
+
+    SaveFileDialog saveFileDialog1 = new SaveFileDialog ();
+    saveFileDialog1.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog1.FilterIndex = 1;
+    saveFileDialog1.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_Spikes";
+    saveFileDialog1.DefaultExt = "txt";
+    saveFileDialog1.InitialDirectory = Directory.GetCurrentDirectory ();
+    saveFileDialog1.Title = "Save Spikes As";
+
+    if (saveFileDialog1.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    SaveFileDialog saveFileDialog2 = new SaveFileDialog ();
+    saveFileDialog2.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog2.FilterIndex = 1;
+    saveFileDialog2.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_Shapes";
+    saveFileDialog2.DefaultExt = "txt";
+    saveFileDialog2.Title = "Save Shapes As";
+
+    if (saveFileDialog2.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    SaveFileDialog saveFileDialog5 = new SaveFileDialog ();
+    saveFileDialog5.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog5.FilterIndex = 1;
+    saveFileDialog5.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_SpikesX";
+    saveFileDialog5.DefaultExt = "txt";
+    saveFileDialog5.Title = "Save Interpolated Shapes As";
+
+    if (saveFileDialog5.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    SaveFileDialog saveFileDialog6 = new SaveFileDialog ();
+    saveFileDialog6.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog6.FilterIndex = 1;
+    saveFileDialog6.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_ShapesX";
+    saveFileDialog6.DefaultExt = "txt";
+    saveFileDialog6.Title = "Save Interpolated Shapes As";
+
+    if (saveFileDialog6.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    SaveFileDialog saveFileDialog3 = new SaveFileDialog ();
+    saveFileDialog3.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog3.FilterIndex = 1;
+    saveFileDialog3.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_Info";
+    saveFileDialog3.DefaultExt = "txt";
+    saveFileDialog3.Title = "Save Further Information As";
+
+    if (saveFileDialog3.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+    SaveFileDialog saveFileDialog4 = new SaveFileDialog ();
+    saveFileDialog4.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+    saveFileDialog4.FilterIndex = 1;
+    saveFileDialog4.FileName = Path.GetFileNameWithoutExtension (openFileDialog1.FileName) + "_Avg";
+    saveFileDialog4.DefaultExt = "txt";
+    saveFileDialog4.Title = "Save Average Voltage Increments As";
+
+    if (saveFileDialog4.ShowDialog () != DialogResult.OK) {
+        throw new Exception ("File dialog error");
+    }
+
+    // open the output file
+    SpkD.openSpikeFile (saveFileDialog1.FileName);
+    saveFileDialog1.Dispose ();
+    SpkD.openShapeFile (saveFileDialog2.FileName);
+    saveFileDialog2.Dispose ();
+    SpkD.openSpikeXFile (saveFileDialog5.FileName);
+    saveFileDialog5.Dispose ();
+    SpkD.openShapeXFile (saveFileDialog6.FileName);
+    saveFileDialog6.Dispose ();
+    SpkD.openInfoFile (saveFileDialog3.FileName);
+    saveFileDialog3.Dispose ();
+    SpkD.openMeanFile (saveFileDialog4.FileName);
+    saveFileDialog4.Dispose ();
+
+    // measure execution time
+    var sw = new Stopwatch ();
+    sw.Start ();
+    //const int NChannels = 4096;
+    //const int df = 2;//has to be changed in Detection class as well
+    if (dfTI [0] > 0) {
+        long t1 = 0;
+        long tInc = dfTI [2];//has to be changed in Detection class as well
+        //int tCut = (sf / 501 + sf / 1000) / dfTI[0] + 6;
+        //int CutOffset = (sf / 1000) / df + 6;
+        for (long t0=0; t0<Math.Min(200*(dfTI[1]),nFrames-tInc); t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.InitialEstimation (vm, t0);
+        }
+        for (long t0=0; t0<dfTI[1]; t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.StartDetection (vm, t0, nFrames, nSec, sfd, Indices);
+            SpkD.Iterate (vm, t0);
+            t1 += dfTI [1];
+        }
+        for (long t0=dfTI[1]; t0<nFrames-tInc; t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.Iterate (vm, t0);
+            t1 += dfTI [1];
+        }
+        if (t1 < nFrames - tInc + dfTI [1] - 1) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t1, nFrames - t1);
+            SpkD.skipLastReverse ((int)(tInc - nFrames + t1));
+            SpkD.Iterate (vm, t1);
+        }
+        short[] [] vmx = brwRdr.GetRawDataADCCounts (Channels, t1, nFrames - t1);
+        SpkD.FinishDetection (vmx, (int)(tInc - nFrames + t1));
+    } else {
+        long t1 = nFrames;
+        long tInc = dfTI [2];
+        //int tCut = -(sf / 501 + sf / 1000) / df + 6 +8;
+        //int CutOffset = -(sf / 1000) / df + 6;
+        for (long t0=nFrames; t0>Math.Max(tInc,nFrames-200*dfTI[1]); t0-= dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0 - tInc, tInc);
+            SpkD.InitialEstimation (vm, t0 - tInc);
+        }
+        for (long t0=nFrames; t0>nFrames-dfTI[1]; t0-=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0-tInc, tInc);
+            SpkD.StartDetection (vm, t0-tInc, nFrames, nSec, sfd, Indices);
+            SpkD.Iterate (vm, t0-tInc);
+            t1 -= dfTI [1];
+        }
+        for (long t0=nFrames-dfTI[1]; t0>tInc; t0-= dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0 - tInc, tInc);
+            SpkD.Iterate (vm, t0 - tInc);
+            t1 -= dfTI [1];
+        }
+        if (t1 > tInc - dfTI [1] + 1) {
+            SpkD.skipLastReverse ((int)(tInc - t1));
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, 0, t1);
+            SpkD.Iterate (vm, 0);
+        }
+        short[] [] vmx = brwRdr.GetRawDataADCCounts (Channels, 0, t1);
+        SpkD.FinishDetection (vmx, (int)(tInc - t1));
+    }
+    sw.Stop ();
+    Console.WriteLine ("Elapsed time: {0}", sw.Elapsed); // TimeSpan
+    Console.WriteLine ("Milliseconds/frame: {0}", sw.Elapsed.TotalMilliseconds / nFrames); // TimeSpan
+}
+
 }

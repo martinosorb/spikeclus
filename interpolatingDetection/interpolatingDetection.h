@@ -154,12 +154,7 @@ public:
     Detection();
     ~Detection();
 	int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices);
-    void openSpikeFile(const std::string& name);
-    void openShapeFile(const std::string& name);
-    void openSpikeXFile(const std::string& name);
-    void openShapeXFile(const std::string& name);
-    void openInfoFile(const std::string& name);
-    void openMeanFile(const std::string& name);
+    void openFiles(const std::string& name);
     void AvgVoltageDefault(short** vm, long t0, int t); //want to compute an approximate 33 percentile
     void InitialEstimation(short** vm, long t0); //use this to get a better initial estimate of Qd. only fast transients.
 	void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices);
