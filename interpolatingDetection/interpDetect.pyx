@@ -54,29 +54,69 @@ def detect(rawfilename, sfd, nDumpFrames):
     
     SpkD.openFiles(rawfilename);
     
-    ############################
+    ''' TO ADAPT FROM C#
     
-    det.InitDetection(nFrames, nSec, sf, nRecCh, tInc, & Indices[0])
-    det.SetInitialParams(9, 5, 0, 8, 3)
-
-    # open output file
-    spikefilename = str.encode(rawfilename + "_Spikes.txt")
-    det.openSpikeFile(spikefilename)
-
-    cdef np.ndarray[unsigned short, ndim = 1, mode = "c"] vm = np.zeros((nRecCh * tInc), dtype=ctypes.c_ushort)
-    startTime = datetime.now()
-    for t0 in range(0, nDumpFrames - tInc, tInc - tCut):
-        if (t0 / tInc) % 100 == 0:
-            print(str(t0 / sf) + " sec")
-        for c in range(nRecCh):
-            vm[c * tInc:c * tInc + tInc] = rf['Ch' +
-                                              str(c)][t0:t0 + tInc].astype(dtype=ctypes.c_ushort)
-        det.MedianVoltage(&vm[0])
-        #det.MeanVoltage( & vm[0])  # a bit faster (maybe)
-        det.Iterate( & vm[0], t0)
-    det.FinishDetection()
-    endTime = datetime.now()
-    print('Time taken for detection: ' + str(endTime - startTime))
-    print('Time per frame: ' + str(1000 * (endTime - startTime) / (nDumpFrames)))
-    print('Time per sample: ' + str(1000 *
-                                    (endTime - startTime) / (nRecCh * nDumpFrames)))
+    // measure execution time
+    var sw = new Stopwatch ();
+    sw.Start ();
+    //const int NChannels = 4096;
+    //const int df = 2;//has to be changed in Detection class as well
+    if (dfTI [0] > 0) {
+        long t1 = 0;
+        long tInc = dfTI [2];//has to be changed in Detection class as well
+        //int tCut = (sf / 501 + sf / 1000) / dfTI[0] + 6;
+        //int CutOffset = (sf / 1000) / df + 6;
+        for (long t0=0; t0<Math.Min(200*(dfTI[1]),nFrames-tInc); t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.InitialEstimation (vm, t0);
+        }
+        for (long t0=0; t0<dfTI[1]; t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.StartDetection (vm, t0, nFrames, nSec, sfd, Indices);
+            SpkD.Iterate (vm, t0);
+            t1 += dfTI [1];
+        }
+        for (long t0=dfTI[1]; t0<nFrames-tInc; t0+=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0, tInc);
+            SpkD.Iterate (vm, t0);
+            t1 += dfTI [1];
+        }
+        if (t1 < nFrames - tInc + dfTI [1] - 1) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t1, nFrames - t1);
+            SpkD.skipLastReverse ((int)(tInc - nFrames + t1));
+            SpkD.Iterate (vm, t1);
+        }
+        short[] [] vmx = brwRdr.GetRawDataADCCounts (Channels, t1, nFrames - t1);
+        SpkD.FinishDetection (vmx, (int)(tInc - nFrames + t1));
+    } else {
+        long t1 = nFrames;
+        long tInc = dfTI [2];
+        //int tCut = -(sf / 501 + sf / 1000) / df + 6 +8;
+        //int CutOffset = -(sf / 1000) / df + 6;
+        for (long t0=nFrames; t0>Math.Max(tInc,nFrames-200*dfTI[1]); t0-= dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0 - tInc, tInc);
+            SpkD.InitialEstimation (vm, t0 - tInc);
+        }
+        for (long t0=nFrames; t0>nFrames-dfTI[1]; t0-=dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0-tInc, tInc);
+            SpkD.StartDetection (vm, t0-tInc, nFrames, nSec, sfd, Indices);
+            SpkD.Iterate (vm, t0-tInc);
+            t1 -= dfTI [1];
+        }
+        for (long t0=nFrames-dfTI[1]; t0>tInc; t0-= dfTI[1]) {
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, t0 - tInc, tInc);
+            SpkD.Iterate (vm, t0 - tInc);
+            t1 -= dfTI [1];
+        }
+        if (t1 > tInc - dfTI [1] + 1) {
+            SpkD.skipLastReverse ((int)(tInc - t1));
+            short[] [] vm = brwRdr.GetRawDataADCCounts (Channels, 0, t1);
+            SpkD.Iterate (vm, 0);
+        }
+        short[] [] vmx = brwRdr.GetRawDataADCCounts (Channels, 0, t1);
+        SpkD.FinishDetection (vmx, (int)(tInc - t1));
+    }
+    sw.Stop ();
+    Console.WriteLine ("Elapsed time: {0}", sw.Elapsed); // TimeSpan
+    Console.WriteLine ("Milliseconds/frame: {0}", sw.Elapsed.TotalMilliseconds / nFrames); // TimeSpan 
+    '''
