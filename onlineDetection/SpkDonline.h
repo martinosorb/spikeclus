@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <thread>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
@@ -45,6 +46,9 @@ class Detection {
   int *Aglobal;
   int *Slice;
   int a; // buffer for Iterate()
+  
+  int nthreads;
+  std::thread* threads;
 
 public:
   Detection();
@@ -55,7 +59,10 @@ public:
   void openSpikeFile(const char *name);
   void MedianVoltage(unsigned short *vm);
   void MeanVoltage(unsigned short *vm);
-  void Iterate(unsigned short *vm, long t0);
+  void Iterate(unsigned short *vm, long t0);  
+  void IterateParallel(unsigned short *vm, long t0);
   void FinishDetection();
+private:
+  void IterateThread(int thread, unsigned short *vm, long t0);
 };
 };

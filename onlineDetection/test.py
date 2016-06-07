@@ -18,4 +18,4 @@ sampling = 23199.0903585
 
 # run detection
 nDumpFrames = int(sampling * 20)  # nFrames; # how many frames to analyze
-detect(rawfile, sampling, nDumpFrames)
+detect(rawfile, sampling, nDumpFrames, parallel = True)

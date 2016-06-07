@@ -32,6 +32,11 @@ void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh,
     SpkArea[i] = 0;
     ChInd[i] = Indices[i];
   }
+  
+  nthreads = (int) std::thread::hardware_concurrency();
+  
+  std::cout << "Using " << nthreads << " threads" << std::endl;   
+  threads = new std::thread[nthreads];
 }
 
 void Detection::SetInitialParams(int thres, int maa, int ahpthr, int maxsl,
@@ -174,8 +179,98 @@ void Detection::Iterate(unsigned short *vm, long t0) {
   }
 } // Iterate
 
-void Detection::IterateParallel(unsigned short* vm, long t0) {
+void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
+    // Loop over data, will be removed for an online algorithm
+  for (int t = 0; t < tInc; t++) { 
+    
+  int chunkSize = std::ceil( (float) NChannels/ (float) nthreads);
+
+  for (int i = threadID*chunkSize; i < NChannels and i < (threadID+1)*chunkSize; i++) { // loop across channels
+                                        // CHANNEL OUT OF LINEAR REGIME
+    if (((vm[i * tInc + t] + 4) % 4096) < 10) {
+      if (A[i] <
+          artT) { // reset only when it starts leaving the linear regime
+        Sl[i] = 0;
+        A[i] = artT;
+      }
+    }
+    // DEFAULT OPERATIONS
+    else if (A[i] == 0) {
+      a = (vm[i * tInc + t] - Aglobal[t]) * Ascale -
+          Qm[i]; // difference between ADC counts and Qm
+      // UPDATE Qm and Qd
+      if (a > 0) {
+        if (a > Qd[i]) {
+          Qm[i] += Qd[i] / Tau_m0;
+          if (a < (5 * Qd[i])) {
+            Qd[i]++;
+          } else if ((Qd[i] > Qdmin) & (a > (6 * Qd[i]))) {
+            Qd[i]--;
+          }
+        } else if (Qd[i] > Qdmin) { // set a minimum level for Qd
+          Qd[i]--;
+        }
+      } else if (a < -Qd[i]) {
+        Qm[i] -= Qd[i] / Tau_m0 / 2;
+      }
+      // TREATMENT OF THRESHOLD CROSSINGS
+      if (Sl[i] > 0) { // Sl frames after peak value
+        // default
+        Sl[i] = (Sl[i] + 1) % (MaxSl + 1); // increment Sl[i]
+        if (Sl[i] < MinSl) { // calculate area under first and second frame
+                              // after spike
+          SpkArea[i] += a;
+        }
+        // check whether it does repolarize
+        else if (a < (AHPthr * Qd[i])) {
+          AHP[i] = true;
+        }
+        // accept spikes after MaxSl frames if...
+        if ((Sl[i] == MaxSl) & (AHP[i])) {
+          if ((2 * SpkArea[i]) > (MinSl * MinAvgAmp * Qd[i])) {
+            w << ChInd[i] << " " << t0 + t - MaxSl + 1 << " "
+              << -Amp[i] * Ascale / Qd[i] << std::endl;
+          }
+          Sl[i] = 0;
+        }
+        // check whether current ADC count is higher
+        else if (Amp[i] < a) {
+          Sl[i] = 1; // reset peak value
+          Amp[i] = a;
+          AHP[i] = false;  // reset AHP
+          SpkArea[i] += a; // not resetting this one (anyway don't need to
+                            // care if the spike is wide)
+        }
+      }
+      // check for threshold crossings
+      else if (a > ((threshold * Qd[i]) / 2)) {
+        Sl[i] = 1;
+        Amp[i] = a;
+        AHP[i] = false;
+        SpkArea[i] = a;
+      }
+    }
+    // AFTER CHANNEL WAS OUT OF LINEAR REGIME
+    else {
+      Qm[i] = (2 * Qm[i] + (vm[i * NChannels + t] - Aglobal[t]) * Ascale +
+                2 * Qd[i]) /
+              3; // update Qm
+      A[i]--;
+    }
+  }
   
+  }
+}
+
+void Detection::IterateParallel(unsigned short *vm, long t0) {
+  
+  // SPIKE DETECTION  
+  for (int threadID = 0; threadID < nthreads; threadID++) {
+    threads[threadID] = std::thread( [=] { IterateThread(threadID, vm, t0); });
+  }
+  for (int threadID = 0; threadID < nthreads; threadID++) {
+    threads[threadID].join();
+  }
 }
 
 void Detection::FinishDetection() // write spikes in interval after last
