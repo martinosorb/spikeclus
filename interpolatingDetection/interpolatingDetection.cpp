@@ -5,7 +5,7 @@ namespace SpkDslowFilter {
 Detection::Detection() {
 }   
 
-int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
+int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
     dfTI = new int[3];
     Aglobal = new int[tInc];
     Aglobaldiff = new int[tInc];
@@ -370,7 +370,7 @@ int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, i
     return dfTI;
 }
       
-void openFiles(const std::string& name) {
+void Detection::openFiles(const std::string& name) {
     w.open(name + "_Spikes"); // For spikes
     wShapes.open(name + "_Shapes"); // For raw data
     wX.open(name + "_SpikesX"); // For spikes
@@ -379,7 +379,7 @@ void openFiles(const std::string& name) {
     wMean.open(name + "_Avg"); // For avg. Voltage
 }
        
-void AvgVoltageDefault(short** vm, long t0, int t) { //want to compute an approximate 33 percentile
+void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
     //would need to correct for Aglobal
@@ -697,7 +697,7 @@ void AvgVoltageDefault(short** vm, long t0, int t) { //want to compute an approx
     //Console.WriteLine ("{0} {1} {2}",Avgs2[2120,0],Avgs2[2120,1], Avgs2[2120,2]);
 }
 
-void InitialEstimation(short** vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
+void Detection::InitialEstimation(short** vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
     int tA;
     if (t0 == t0x) {
         //estimate Aglobal
@@ -874,7 +874,7 @@ void InitialEstimation(short** vm, long t0) { //use this to get a better initial
     }
 }
 
-void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
+void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wX.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
@@ -1007,7 +1007,7 @@ void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, 
     }
 }
 
-void skipLastReverse(int skipLast) {
+void Detection::skipLastReverse(int skipLast) {
     if (df < 0) {
         std::cout << skipLast << std::endl; // endl flushes the output
         //ti -= skipLast;
@@ -1022,7 +1022,7 @@ void skipLastReverse(int skipLast) {
     }
 }
 
-void Iterate(short** vm, long t0) {
+void Detection::Iterate(short** vm, long t0) {
     //int qq;
     int a4;//to buffer the difference between ADC counts and Qm
     int a5;//to buffer the difference between ADC counts and Qm
@@ -1920,7 +1920,7 @@ void Iterate(short** vm, long t0) {
     }
 }
 
-void FinishDetection(short** vm, int skipLast) {
+void Detection::FinishDetection(short** vm, int skipLast) {
     if (df > 0) {
         for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels

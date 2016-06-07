@@ -174,6 +174,10 @@ void Detection::Iterate(unsigned short *vm, long t0) {
   }
 } // Iterate
 
+void Detection::IterateParallel(unsigned short* vm, long t0) {
+  
+}
+
 void Detection::FinishDetection() // write spikes in interval after last
                                   // recalibration; close file
 {

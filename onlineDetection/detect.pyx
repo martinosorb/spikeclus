@@ -60,6 +60,7 @@ def detect(rawfilename, sfd, nDumpFrames):
     cdef np.ndarray[unsigned short, ndim = 1, mode = "c"] vm = np.zeros((nRecCh * tInc), dtype=ctypes.c_ushort)
     startTime = datetime.now()
     for t0 in range(0, nDumpFrames - tInc, tInc - tCut):
+        print "HEY"
         if (t0 / tInc) % 100 == 0:
             print(str(t0 / sf) + " sec")
         for c in range(nRecCh):
@@ -67,7 +68,7 @@ def detect(rawfilename, sfd, nDumpFrames):
                                               str(c)][t0:t0 + tInc].astype(dtype=ctypes.c_ushort)
         det.MedianVoltage(&vm[0])
         #det.MeanVoltage( & vm[0])  # a bit faster (maybe)
-        det.Iterate( & vm[0], t0)
+        det.Iterate(&vm[0], t0)
     det.FinishDetection()
     endTime = datetime.now()
     print('Time taken for detection: ' + str(endTime - startTime))
