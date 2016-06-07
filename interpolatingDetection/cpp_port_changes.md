@@ -1,4 +1,4 @@
-C++ port changes:
+# C++ port changes:
 * 2 files (.cpp and .h)    
 * GUI removed
 * GUI output redirected to console
