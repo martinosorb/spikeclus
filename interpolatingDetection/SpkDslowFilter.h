@@ -2,6 +2,12 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <vector>
+
+// Provisional workaround to ease the translation from C# to C++
+#define allocate(V, t, x, y) \
+    V = new t*[x]; \
+    for (int i = 0; i < x; i++) { V[i] = new t[y]; }
 
 namespace SpkDslowFilter {
 class Detection {
@@ -19,7 +25,7 @@ class Detection {
 		int* ChInd5List;
 		//Sampling rate and subsampling
 		int Sampling;//=7000; set at runtime
-		decimal FrameDt;//interval between frames. for gui.
+		float FrameDt;//interval between frames. for gui.
 		int sfi;// integer sampling rate
 		bool HF;//frequency above 12kHz? Used for slow filter.
 		bool Subsample;//whether only every second frame shall be used (used for slow filter).

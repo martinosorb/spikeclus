@@ -1,4 +1,4 @@
-#include "interpolatingDetection.h"
+#include "SpkDslowFilter.h"
 
 namespace SpkDslowFilter {
 
@@ -19,7 +19,7 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     NChannels = NCh;
     //NFrames = nFrames;
     sfi = sf / 1670;
-    FrameDt = (decimal)(1000.0 / sfd);
+    FrameDt = (float) (1000.0 / sfd);
     int* SInd = new int[4096];
     int* SInd4 = new int[4096];
     int* SInd5 = new int[4096];
@@ -164,11 +164,11 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     Qm = new int[NChannels];//median
     QmPre = new int[NChannels];
     QmPreD = new int[NChannels];
-    Qdiff = new int[NChannels][dtMx];
-    Qmax = new int[NChannels][2];
+    allocate(Qdiff, int, NChannels, dtMx); // Qdiff = allocate(new int[NChannels][dtMx];
+    allocate(Qmax, int, NChannels, 2); // Qmax = new int[NChannels][2];
     QmaxE = new int[NChannels];
     SqIv = new long[NChannels];//sum of squared channel increments
-    SIprod = new long[NChannels][13];//sum of product of global and channel voltage increments
+    allocate(SIprod, long, NChannels, 13); // SIprod = new long[NChannels][13];//sum of product of global and channel voltage increments
     //SIp = new int[NChannels];
     Vbias = new int[NChannels];
     FVbias = new int[NChannels];
@@ -187,7 +187,7 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     AHP5 = new bool[NChannels];//counter for repolarizing current
     Amp5 = new int[NChannels];//buffers spike amplitude
     Slice = new int[NChannels];
-    Avgs1= new int[NChannels][3];
+    allocate(Avgs1, int, NChannels, 3); // Avgs1= new int[NChannels][3];
     //sortAvg= new int[NChannels][2];
     //Avgs1b= new int[NChannels][];
     Avgs3= new int[NChannels];
@@ -216,7 +216,7 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     if (sf / 5000 > 3) {
         NFblocks = sf / 5000;
     }
-    Avgs2 = new int[NChannels][NFblocks];
+    allocate(Avgs2, int, NChannels, NFblocks); // Avgs2 = new int[NChannels][NFblocks];
     FiltNorm = 2*(8 * (NFblocks - 1) + 2);
     HF = (sf > 12000);
     if (HF) {
@@ -706,7 +706,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
             for (int i=1; i<NChannels; i++) {//loop across channels
                 Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
             }
-            std::sort(std::begin(Slice), std::end(Slice));
+            std::sort(&Slice[0], &Slice[NChannels+1]);
             Aglobal [tA] = Slice [NChannels / 2];
         }
         for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
@@ -776,7 +776,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
         for (int i=1; i<NChannels; i++) {//loop across channels
             Slice[i]=(vm [i][t])%4095+(vm[i][t+df])%4095;
         }
-        std::sort(std::begin(Slice), std::end(Slice));
+        std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA]=Slice[NChannels / 2];
         Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
         AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
@@ -875,19 +875,21 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
 }
 
 void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
+    /** Not necessary
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wX.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapesX.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wInfo.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wMean.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
+    */
     //write some info
     
     wInfo << "# Number of frames:\n" << nFrames/dfAbs << "\n";
     wInfo << "# Duration (s):\n" << nSec << "\n";
     wInfo << "# Sampling rate:\n" << sfd/dfAbs  << "\n";
-    wInfo << "# Threshold scaling:\n", AmpScale << "\n";
-    wInfo << "# Amplitude scaling:\n", Ascale << "\n";
+    wInfo << "# Threshold scaling:\n" << AmpScale << "\n";
+    wInfo << "# Amplitude scaling:\n" << Ascale << "\n";
     wInfo << "# Detection threshold*\n" << AmpScale << "\n" << threshold << "\n";
     wInfo << "# Repolarization threshold*\n" << AmpScale << "\n" << AHPthr << "\n";
     wInfo << "# Recalibration trigger:\n" << recalibTrigger << "\n";
@@ -895,7 +897,7 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
     wInfo << "# Smoothing window (detection):\n" << tSmth << "\n";
     wInfo << "# Smoothing window (amplitudes):\n" << Lspike << "\n";
     wInfo << "# Recording channels:\n";
-    for (int i=0; i<Indices.Length; i++) {
+    for (int i=0; i< NChannels; i++) {
         wInfo << Indices [i] << "\n";
     }
     wInfo << "# Recording channels4:\n";
@@ -927,7 +929,7 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
         for (int i=1; i<NChannels; i++) {//loop across channels
             Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t+df]) % 4095;
         }
-        Array.Sort (Slice);
+        std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA] = Slice [NChannels / 2];
     }
     for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
@@ -1047,7 +1049,7 @@ void Detection::Iterate(short** vm, long t0) {
         for (int i=1; i<NChannels; i++) {//loop across channels
             Slice[i]=(vm [i][t])%4095+(vm[i][t+df])%4095;
         }
-        Array.Sort(Slice);
+        std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA]=Slice[NChannels / 2];
         Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
         AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
@@ -1316,7 +1318,7 @@ void Detection::Iterate(short** vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
-                            Array.Sort (tQmA);
+                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1346,7 +1348,7 @@ void Detection::Iterate(short** vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
-                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1390,7 +1392,7 @@ void Detection::Iterate(short** vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
-                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1420,7 +1422,7 @@ void Detection::Iterate(short** vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
-                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1625,7 +1627,7 @@ void Detection::Iterate(short** vm, long t0) {
                         for (int kk=tQm0; kk<tQmf; kk++){
                             tQmA[kk]=tShape[tQmX[kk]];
                         }
-                        std::sort(std::begin(tQmA), std::end(tQmA));
+                        std::sort(&tQmA[0], &tQmA[tQmf+1]);
                         b = tQmA [tQmm]+tQmA [tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
@@ -1653,7 +1655,7 @@ void Detection::Iterate(short** vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
-                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1683,7 +1685,7 @@ void Detection::Iterate(short** vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
-                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1726,7 +1728,7 @@ void Detection::Iterate(short** vm, long t0) {
                         for (int kk=tQm0; kk<tQmf; kk++){
                             tQmA[kk]=tShape[tQmXLong[kk]];
                         }
-                        std::sort(std::begin(tQmA), std::end(tQmA));
+                        std::sort(&tQmA[0], &tQmA[tQmf+1]);
                         b = tQmA [tQmm]+tQmA [tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
@@ -1754,7 +1756,7 @@ void Detection::Iterate(short** vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
-                            std::sort(std::begin(tQmA), std::end(tQmA));
+                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1784,7 +1786,7 @@ void Detection::Iterate(short** vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
-                                std::sort(std::begin(tQmA), std::end(tQmA));
+                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1926,7 +1928,7 @@ void Detection::FinishDetection(short** vm, int skipLast) {
             for (int i=1; i<NChannels; i++) {//loop across channels
                 Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
             }
-            std::sort(std::begin(Slice), std::end(slice));
+            std::sort(&Slice[0], &Slice[NChannels+1]);
             wMean << Slice [NChannels / 2] << "\n";
         }
     } else {
@@ -1934,7 +1936,7 @@ void Detection::FinishDetection(short** vm, int skipLast) {
             for (int i=1; i<NChannels; i++) {//loop across channels
                 Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
             }
-            std::sort(std::begin(Slice), std::end(slice));
+            std::sort(&Slice[0], &Slice[NChannels+1]);
             wMean << Slice [NChannels / 2] << "\n";
         }
     }

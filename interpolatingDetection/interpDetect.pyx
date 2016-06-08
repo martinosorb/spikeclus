@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = interpolatingDetection.cpp
+# distutils: sources = SpkDslowFilter.cpp
 
 import cython
 import numpy as np
@@ -10,16 +10,11 @@ from ctypes import CDLL
 import ctypes
 from datetime import datetime
 
-cdef extern from "iterpolatingDetection.h" namespace "SpkDslowFilter":
+cdef extern from "SpkDslowFilter.h" namespace "SpkDslowFilter":
     cdef cppclass Detection:
         Detection() except +
         int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices)
-        void openSpikeFile(const std::string& name)
-        void openShapeFile(const std::string& name)
-        void openSpikeXFile(const std::string& name)
-        void openShapeXFile(const std::string& name)
-        void openInfoFile(const std::string& name)
-        void openMeanFile(const std::string& name)
+        void openSpikeFile(const char *name)
         void AvgVoltageDefault(short** vm, long t0, int t)
         void InitialEstimation(short** vm, long t0)
         void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices)
@@ -38,7 +33,7 @@ def detect(rawfilename, sfd, nDumpFrames):
     sf = int(sfd)
     nSec = nDumpFrames / sfd
 
-    print '# Number of frames:', nframes
+    print '# Number of frames:', nFrames
     print '# Duration (s):', nSec
     print '# Sampling rate: ', sfd
     print '# Number of recorded channels: ', nRecCh
@@ -48,11 +43,11 @@ def detect(rawfilename, sfd, nDumpFrames):
     for i in range(nRecCh):
         Indices[i] = (cy[i] - 1) + 64 * (cx[i] - 1)
 
-    cdef Detection* SpkD = new Detection() 
+    # cdef Detection* SpkD = new Detection() 
     
-    cdef np.ndarray[int, mode = "c"] dfTI = SpkD.SetInitialParams (nFrames, nSec, sf, sfd, nRecCh, Indices);
+    # cdef np.ndarray[int, mode = "c"] dfTI = SpkD.SetInitialParams (nFrames, nSec, sf, sfd, nRecCh, Indices);
     
-    SpkD.openFiles(rawfilename);
+    # SpkD.openFiles(rawfilename);
     
     ''' TO ADAPT FROM C#
     

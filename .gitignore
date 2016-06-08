@@ -64,5 +64,5 @@ target/
 # ipython notebook
 .ipynb_checkpoints/
 
-# VSCode
-settings.json
+# VSCode settings
+.vscode/
