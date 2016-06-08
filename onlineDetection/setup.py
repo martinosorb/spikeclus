@@ -1,5 +1,6 @@
 from Cython.Build import cythonize
 from setuptools import setup, Extension
+import numpy
 
 long_descr = """`See
 <http://github.com/>`_.
@@ -18,5 +19,5 @@ setup(
            language="c++",
            extra_compile_args=['-std=c++11'],
            )),
-    # include_dirs=[numpy.get_include()], requires=['numpy', 'h5py']
+    include_dirs=[numpy.get_include()], requires=['numpy', 'h5py']
 )

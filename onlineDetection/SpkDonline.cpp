@@ -33,9 +33,8 @@ void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh,
     ChInd[i] = Indices[i];
   }
   
-  nthreads = (int) std::thread::hardware_concurrency();
-  
-  std::cout << "Using " << nthreads << " threads" << std::endl;   
+  nthreads = (int) std::thread::hardware_concurrency();  
+  std::cout << "# Number of threads for the parallel version: " << nthreads << std::endl;   
   threads = new std::thread[nthreads];
 }
 
@@ -180,24 +179,28 @@ void Detection::Iterate(unsigned short *vm, long t0) {
 } // Iterate
 
 void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
-    // Loop over data, will be removed for an online algorithm
+  
+  int a; // buffer for Iterate() now is thread dependant
+  
+  // Loop over data (offline algorithm)
   for (int t = 0; t < tInc; t++) { 
-    
+
+  // Number of channels associated to a thread
   int chunkSize = std::ceil( (float) NChannels/ (float) nthreads);
 
-  for (int i = threadID*chunkSize; i < NChannels and i < (threadID+1)*chunkSize; i++) { // loop across channels
-                                        // CHANNEL OUT OF LINEAR REGIME
+  // Loop accross all channels associated to this thread
+  for (int i = threadID*chunkSize; i < NChannels and i < (threadID+1)*chunkSize; i++) { 
+    // CHANNEL OUT OF LINEAR REGIME
     if (((vm[i * tInc + t] + 4) % 4096) < 10) {
-      if (A[i] <
-          artT) { // reset only when it starts leaving the linear regime
+      if (A[i] < artT) { // reset only when it starts leaving the linear regime
         Sl[i] = 0;
         A[i] = artT;
       }
     }
     // DEFAULT OPERATIONS
     else if (A[i] == 0) {
-      a = (vm[i * tInc + t] - Aglobal[t]) * Ascale -
-          Qm[i]; // difference between ADC counts and Qm
+      // Difference between ADC counts and Qm
+      a = (vm[i * tInc + t] - Aglobal[t]) * Ascale - Qm[i]; 
       // UPDATE Qm and Qd
       if (a > 0) {
         if (a > Qd[i]) {
@@ -228,8 +231,14 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
         // accept spikes after MaxSl frames if...
         if ((Sl[i] == MaxSl) & (AHP[i])) {
           if ((2 * SpkArea[i]) > (MinSl * MinAvgAmp * Qd[i])) {
+
+            output_mtx.lock();
+
             w << ChInd[i] << " " << t0 + t - MaxSl + 1 << " "
-              << -Amp[i] * Ascale / Qd[i] << std::endl;
+              << -Amp[i] * Ascale / Qd[i] << "\n";
+
+            output_mtx.unlock();
+            
           }
           Sl[i] = 0;
         }
@@ -263,12 +272,11 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
 }
 
 void Detection::IterateParallel(unsigned short *vm, long t0) {
-  
   // SPIKE DETECTION  
   for (int threadID = 0; threadID < nthreads; threadID++) {
     threads[threadID] = std::thread( [=] { IterateThread(threadID, vm, t0); });
   }
-  for (int threadID = 0; threadID < nthreads; threadID++) {
+  for (int threadID = 0; threadID < nthreads; threadID++) { 
     threads[threadID].join();
   }
 }

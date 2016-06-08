@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
@@ -45,10 +46,11 @@ class Detection {
   std::ofstream w; // for spikes
   int *Aglobal;
   int *Slice;
-  int a; // buffer for Iterate()
+  int a; // buffer for Iterate() (sequential version)
   
   int nthreads;
   std::thread* threads;
+  std::mutex output_mtx; // Used to lock the output
 
 public:
   Detection();

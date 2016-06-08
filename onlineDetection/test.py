@@ -4,12 +4,13 @@
 from detect import detect
 import h5py
 import numpy as np
+import os
 
 # raw data file
 # rawpath = 'data/'
 # rawfile = rawpath+'P29_16_05_14_retina02_left_stim2_smallarray_fullfield_raw3'
 
-rawpath = '/home/albert/data/' # Testing in local folder
+rawpath = os.environ['HOME'] + '/data/' # Testing in local folder
 rawfile = rawpath + 'P29_16_05_14_retina02_left_stim2_smallarray_fullfield_raw3'
 
 print(rawfile)

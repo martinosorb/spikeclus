@@ -37,7 +37,7 @@ def detect(rawfilename, sfd, nDumpFrames, parallel = False):
     # number of frames to read in  one go
     # the main bottleneck is reading the data, so this should be large if
     # memory permits
-    tInc = 20000 #  Default 20000
+    tInc = 20000 # nDumpFrames-1 
     tCut = int(1.0 * sf / 1000 + 1.0 * sf / 1000 + 6)
 
     print("# Sampling rate: " + str(sf))
@@ -64,7 +64,7 @@ def detect(rawfilename, sfd, nDumpFrames, parallel = False):
     readT = medianT = iterateT = 0.0;
     
     for t0 in range(0, nDumpFrames - tInc, tInc - tCut):
-    
+        
         tic = datetime.now()
         if (t0 / tInc) % 100 == 0:
             print(str(t0 / sf) + " sec")
@@ -81,7 +81,7 @@ def detect(rawfilename, sfd, nDumpFrames, parallel = False):
         tic = datetime.now()
         if not parallel: # Sequential
             det.Iterate(&vm[0], t0)
-        else: # Parallel
+        else: # Parallel 
             det.IterateParallel(&vm[0], t0)
         iterateT += (datetime.now() - tic).microseconds
         
