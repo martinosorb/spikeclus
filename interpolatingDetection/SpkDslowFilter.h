@@ -1,17 +1,19 @@
-#include <string>
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <string>
 
 // Provisional workaround to ease the translation from C# to C++
 #define allocate(V, t, x, y) \
-    V = new t*[x]; \
-    for (int i = 0; i < x; i++) { V[i] = new t[y]; }
+    V = new t*[x]; for (int i = 0; i < x; i++) { V[i] = new t[y]; }
 
 namespace SpkDslowFilter {
-class Detection {
-    int NChannels;// number of channels; is set when reading the data
+class InterpDetection {
+	int NChannels;// number of channels; is set when reading the data
 	int** ChInd4a;
 	int** ChInd4b;
 	int** ChInd4c;
@@ -144,30 +146,30 @@ class Detection {
 	int dtE=0;
 	const int dtEMx = 2;
 	int dtEx=dtEMx-1;
-	
+
 	int ChInd4aN = 0;
 	int ChInd5N = 0;
 	//Files to save the spikes etc.
-	static std::ofstream w; //for spikes
-	static std::ofstream wShapes; //for raw data
-	static std::ofstream wX; //for spikes
-	static std::ofstream wShapesX; //for raw data
-	static std::ofstream wInfo; //for other stuff
-	static std::ofstream wMean; //for avg. Voltage
-	
+	std::ofstream w; //for spikes
+	std::ofstream wShapes; //for raw data
+	std::ofstream wX; //for spikes
+	std::ofstream wShapesX; //for raw data
+	std::ofstream wInfo; //for other stuff
+	std::ofstream wMean; //for avg. Voltage
+
 	int recalibTrigger=1;
 	int Acal=3000;//for recalibration events
-        
+		
 public:
-    Detection();
-    ~Detection();
+	InterpDetection();
+	~InterpDetection();
 	int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices);
-    void openFiles(const std::string& name);
-    void AvgVoltageDefault(short** vm, long t0, int t); //want to compute an approximate 33 percentile
-    void InitialEstimation(short** vm, long t0); //use this to get a better initial estimate of Qd. only fast transients.
-	void StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices);
-    void skipLastReverse(int skipLast);
-    void Iterate(short** vm, long t0);
-    void FinishDetection(short** vm, int skipLast);
+	void openFiles(const std::string& name);
+	void AvgVoltageDefault(short* vm, long t0, int t); //want to compute an approximate 33 percentile
+	void InitialEstimation(short* vm, long t0); //use this to get a better initial estimate of Qd. only fast transients.
+	void StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices);
+	void skipLastReverse(int skipLast);
+	void Iterate(short* vm, long t0);
+	void FinishDetection(short* vm, int skipLast);
 };
 };

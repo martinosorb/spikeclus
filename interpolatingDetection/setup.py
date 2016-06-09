@@ -3,7 +3,7 @@ from setuptools import setup, Extension
 import numpy
 
 setup(
-    version='...',
+    version='0.1',
     author='...',
     license='...',
     description='...',

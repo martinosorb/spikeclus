@@ -2,10 +2,10 @@
 
 namespace SpkDslowFilter {
 
-Detection::Detection() {
+InterpDetection::InterpDetection() {
 }   
 
-int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
+int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
     dfTI = new int[3];
     Aglobal = new int[tInc];
     Aglobaldiff = new int[tInc];
@@ -370,7 +370,7 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     return dfTI;
 }
       
-void Detection::openFiles(const std::string& name) {
+void InterpDetection::openFiles(const std::string& name) {
     w.open(name + "_Spikes"); // For spikes
     wShapes.open(name + "_Shapes"); // For raw data
     wX.open(name + "_SpikesX"); // For spikes
@@ -379,7 +379,7 @@ void Detection::openFiles(const std::string& name) {
     wMean.open(name + "_Avg"); // For avg. Voltage
 }
        
-void Detection::AvgVoltageDefault(short* vm, long t0, int t) { //want to compute an approximate 33 percentile
+void InterpDetection::AvgVoltageDefault(short* vm, long t0, int t) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
     //would need to correct for Aglobal
@@ -697,7 +697,7 @@ void Detection::AvgVoltageDefault(short* vm, long t0, int t) { //want to compute
     //Console.WriteLine ("{0} {1} {2}",Avgs2[2120,0],Avgs2[2120,1], Avgs2[2120,2]);
 }
 
-void Detection::InitialEstimation(short* vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
+void InterpDetection::InitialEstimation(short* vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
     int tA;
     if (t0 == t0x) {
         //estimate Aglobal
@@ -874,7 +874,7 @@ void Detection::InitialEstimation(short* vm, long t0) { //use this to get a bett
     }
 }
 
-void Detection::StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
+void InterpDetection::StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
     /** Not necessary
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
@@ -1009,7 +1009,7 @@ void Detection::StartDetection(short* vm, long t0, long nFrames, double nSec, do
     }
 }
 
-void Detection::skipLastReverse(int skipLast) {
+void InterpDetection::skipLastReverse(int skipLast) {
     if (df < 0) {
         std::cout << skipLast << std::endl; // endl flushes the output
         //ti -= skipLast;
@@ -1024,7 +1024,7 @@ void Detection::skipLastReverse(int skipLast) {
     }
 }
 
-void Detection::Iterate(short* vm, long t0) {
+void InterpDetection::Iterate(short* vm, long t0) {
     //int qq;
     int a4;//to buffer the difference between ADC counts and Qm
     int a5;//to buffer the difference between ADC counts and Qm
@@ -1104,7 +1104,7 @@ void Detection::Iterate(short* vm, long t0) {
         wMean << Aglobal[tA] << "\n";
         // RECALIBRATION EVENTS
         if (recalibTrigger==0){
-            if (vm[0][t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
+            if (vm[0*NChannels + t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
                 if (Acal > 2000) {
                     wInfo << (t+t0)/dfAbs;//write time of recalibration event
                     for (int i=0; i<NChannels; i++) {//loop across channels
@@ -1309,7 +1309,7 @@ void Detection::Iterate(short* vm, long t0) {
                         NSpikes4++;//to count spikes
                         for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1339,7 +1339,7 @@ void Detection::Iterate(short* vm, long t0) {
                         for (int ch = 0; i < 8; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1383,7 +1383,7 @@ void Detection::Iterate(short* vm, long t0) {
                         NSpikes4++;//to count spikes
                         for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1413,7 +1413,7 @@ void Detection::Iterate(short* vm, long t0) {
                         for (int ch = 0; i < 8; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1471,7 +1471,14 @@ void Detection::Iterate(short* vm, long t0) {
                 ChS4Min = 0;
                 a4 = 0;
                 for (int ii=1; ii<4; ii++) {
+                    std::cout << i << " " << ii << std::endl;
                     if (A [ChInd4a [i] [ii]] == 0) {
+                        ////////////////////////////////////////////////////////////
+                        std::cout << "DEBUG" << std::endl;
+                        std::cout << "i:" << i << " ChS4Min:" << ChS4Min << std::endl;
+                        std::cout << ChInd4a[i][ChS4Min] << std::endl;
+                        std::cout << Qmax [ChInd4a[i][ChS4Min]][dt] << std::endl;
+                        ////////////////////////////////////////////////////////////
                         if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
                             //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
                             a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
@@ -1618,7 +1625,7 @@ void Detection::Iterate(short* vm, long t0) {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
                         NSpikes5++;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
                         //compute baseline
                         for (int kk=0; kk<tQm0; kk++){
@@ -1646,7 +1653,7 @@ void Detection::Iterate(short* vm, long t0) {
                         }
                         for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1676,7 +1683,7 @@ void Detection::Iterate(short* vm, long t0) {
                         for (int ch = 0; i < 4; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1719,7 +1726,7 @@ void Detection::Iterate(short* vm, long t0) {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
                         NSpikes5++;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
                         //compute baseline
                         for (int kk=0; kk<tQm0; kk++){
@@ -1747,7 +1754,7 @@ void Detection::Iterate(short* vm, long t0) {
                         }
                         for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1777,7 +1784,7 @@ void Detection::Iterate(short* vm, long t0) {
                         for (int ch = 0; i < 4; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*NChannels + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1922,7 +1929,7 @@ void Detection::Iterate(short* vm, long t0) {
     }
 }
 
-void Detection::FinishDetection(short* vm, int skipLast) {
+void InterpDetection::FinishDetection(short* vm, int skipLast) {
     if (df > 0) {
         for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
