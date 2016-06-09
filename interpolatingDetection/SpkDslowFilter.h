@@ -145,6 +145,8 @@ class Detection {
 		const int dtEMx = 2;
 		int dtEx=dtEMx-1;
         
+		int ChInd4aN = 0;
+		int ChInd5N = 0;
 		//Files to save the spikes etc.
 		static std::ofstream w; //for spikes
 		static std::ofstream wShapes; //for raw data

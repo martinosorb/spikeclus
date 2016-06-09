@@ -78,8 +78,8 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
             SInd5 [Indices [i] + 64] += 1;
         }
     }//channels with (all) neighbors have SInd4=4 or SInd5=5
-    int ChInd4aN = 0;
-    int ChInd5N = 0;
+    // int ChInd4aN = 0; (changed: global variable)
+    // int ChInd5N = 0; (changed: global variable)
     for (int i=0; i<4096; i++) {
         if (SInd4 [i] == 4) {
             ChInd4a [SInd [i]][0] = SInd [i];
@@ -195,7 +195,7 @@ int* Detection::SetInitialParams (long nFrames, double nSec, int sf, double sfd,
     // Parameters    
     float detection_threshold = 6.0;
     float repolarization_threshold = 0.0;
-    bool recalibration = true;
+    // bool recalibration = true; // Not currently used
     int increment = 1;
     float cutoutPrePeak = 2*sfi*FrameDt; // 1.14
     float cutoutPostPeak = 3*sfi*FrameDt; // 1.71
@@ -1116,7 +1116,7 @@ void Detection::Iterate(short** vm, long t0) {
                         }
                     }
                     wInfo << "\n";
-                    std::cout << (t+t0)/Sampling/dfAbs) << " sec" << std::endl;// to monitor progress of spike detection                    
+                    std::cout << (t+t0)/Sampling/dfAbs << " sec" << std::endl;// to monitor progress of spike detection                    
                     Acal=0;//to remember last recalibration event
                     for (int i=0; i<NChannels; i++) {
                         FVsbias [i] += FVbias [i];//want to see whether this matches the correlation structure
@@ -1148,7 +1148,7 @@ void Detection::Iterate(short** vm, long t0) {
         for (int i=0; i<24;i++){
             for (int kkk=0; kkk<9; kkk++){
                 //Console.WriteLine ("{0} {1} {2} {3}", (t+t0)/Sampling,Iseq[(t+t0-i+256)%256]+Inn[kkk],((t+t0-i+256)%256)/16,(t+t0-i+30)%15);
-                Qdiff[Iseq[(t+t0-i+256)%256]+Inn[kkk],dt]=(Iweights[((t+t0-i+256)%256)/16,kkk]*Template[(t+t0-i+256)%16,i])/Ann[(t+t0-i+30)%15]/(-64)*AscaleV/1000;
+                Qdiff[Iseq[(t+t0-i+256)%256]+Inn[kkk]][dt]=(Iweights[((t+t0-i+256)%256)/16,kkk]*Template[(t+t0-i+256)%16,i])/Ann[(t+t0-i+30)%15]/(-64)*AscaleV/1000;
             }
         }
         */
@@ -1250,19 +1250,19 @@ void Detection::Iterate(short** vm, long t0) {
             }
             //Qmax[i,dt]=Math.Max((Qdiff[i,(dt+1)%2],Qdiff[i,dt]);
         }
-        foreach (int i in ChInd4List) {//loop across channels
+        for (int i = 0; i < ChInd4aN; i++) {//loop across channels
             if (Sl4[i]>0) {//Sl frames after peak value
                 ChS4Min = 0;
                 a4=0;
                 for (int ii=1; ii<4; ii++) {
                     if (A[ChInd4a[i][ii]]==0){
-                        if (Qmax [ChInd4a[i][ChS4Min],dt]/Qd [ChInd4a[i][ChS4Min]] > Qmax [ChInd4a[i][ii],dt]/Qd [ChInd4a[i][ii]]){
-                        //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
-                            a4 += Qmax [ChInd4a[i][ChS4Min],dt]/ Qd [ChInd4a[i][ChS4Min]];
+                        if (Qmax [ChInd4a[i][ChS4Min]][dt]/Qd [ChInd4a[i][ChS4Min]] > Qmax [ChInd4a[i][ii]][dt]/Qd [ChInd4a[i][ii]]){
+                        //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
+                            a4 += Qmax [ChInd4a[i][ChS4Min]][dt]/ Qd [ChInd4a[i][ChS4Min]];
                             ChS4Min = ii;
                         }
                         else {
-                            a4 += Qmax [ChInd4a[i][ii],dt]/ Qd [ChInd4a[i][ii]];
+                            a4 += Qmax [ChInd4a[i][ii]][dt]/ Qd [ChInd4a[i][ii]];
                         }
                     }
                 }
@@ -1307,7 +1307,7 @@ void Detection::Iterate(short** vm, long t0) {
                     if (AHP4[i]) {
                         wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
                         NSpikes4++;//to count spikes
-                        foreach (int ch in ChInd4a[i]){
+                        for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
                                 tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
@@ -1331,12 +1331,12 @@ void Detection::Iterate(short** vm, long t0) {
                                     Lmx=Lm;
                                 }
                             }
-                            wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            wShapesX << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                             for (int jj=0; jj<tCut; jj++){
                                 wShapesX << tShape[jj] << " ";
                             }
                         }
-                        for (int ch : ChInd4b[i]){
+                        for (int ch = 0; i < 8; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
                                     tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
@@ -1361,7 +1361,7 @@ void Detection::Iterate(short** vm, long t0) {
                                         Lmx=Lm;
                                     }
                                 }
-                                wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                                wShapesX << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                                 /*
                                 for (int jj=0; jj<tCut; jj++){
                                     wShapesX.Write("{0} ",  tShape[jj]);
@@ -1381,7 +1381,7 @@ void Detection::Iterate(short** vm, long t0) {
                     else {
                         wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
                         NSpikes4++;//to count spikes
-                        for (int ch : ChInd4a[i]){
+                        for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
                                 tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
@@ -1405,12 +1405,12 @@ void Detection::Iterate(short** vm, long t0) {
                                     Lmx=Lm;
                                 }
                             }
-                            wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            wShapesX << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                             for (int jj=0; jj<tCutLong; jj++){
                                 wShapesX << tShape[jj] << " ";
                             }
                         }
-                        for (int ch : ChInd4b[i]){
+                        for (int ch = 0; i < 8; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
                                     tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
@@ -1435,7 +1435,7 @@ void Detection::Iterate(short** vm, long t0) {
                                         Lmx=Lm;
                                     }
                                 }
-                                wShapesX << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx  << " ";
+                                wShapesX << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx  << " ";
                                 /*
                                 for (int jj=0; jj<tCutLong; jj++){
                                     wShapesX.Write("{0} ", tShape[jj]);
@@ -1466,14 +1466,14 @@ void Detection::Iterate(short** vm, long t0) {
             //}
             //else if (ChInd4a[i][0]>-1){//should rather make a list for that
             //want one step to decide whichelectrodes to look at; have to do for whole array on single electrodes.
-            //if (Math.Max(Math.Min(Qmax[ChInd4a[i][0],dt],Qmax[ChInd4a[i][3],dt]),Math.Min(Qmax[ChInd4a[i][1],dt],Qmax[ChInd4a[i][2],dt]))>(2000*AmpScale)){
+            //if (Math.Max(Math.Min(Qmax[ChInd4a[i][0]][dt],Qmax[ChInd4a[i][3]][dt]),Math.Min(Qmax[ChInd4a[i][1]][dt],Qmax[ChInd4a[i][2]][dt]))>(2000*AmpScale)){
             else if (Z4next[i]==0) {
                 ChS4Min = 0;
                 a4 = 0;
                 for (int ii=1; ii<4; ii++) {
                     if (A [ChInd4a [i] [ii]] == 0) {
                         if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
-                            //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
+                            //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
                             a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
                             ChS4Min = ii;
                         } else {
@@ -1498,7 +1498,7 @@ void Detection::Iterate(short** vm, long t0) {
                 for (int ii=1; ii<4; ii++) {
                     if (A [ChInd4a [i] [ii]] == 0) {
                         if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
-                            //if (Qmax [ChInd4a[i][ChS4Min],dt] > Qmax [ChInd4a[i][ii],dt]) {
+                            //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
                             a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
                             ChS4Min = ii;
                         } else {
@@ -1541,7 +1541,7 @@ void Detection::Iterate(short** vm, long t0) {
                     a4 = 0;
                     for (int ii=1; ii<4; ii++) {
                         if (A [ChInd4a [i] [ii]] == 0) {
-                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii], dtPre] / Qd [ChInd4a [i] [ii]]) {
+                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]]) {
                                 //if (Qmax [ChInd4a[i][ChS4Min],dtPre] > Qmax [ChInd4a[i][ii],dtPre]) {
                                 a4 += Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]];
                                 ChS4Min = ii;
@@ -1563,7 +1563,7 @@ void Detection::Iterate(short** vm, long t0) {
             }
             //}
         }
-        for (int i : ChInd5List) {//loop across channels
+        for (int i = 0; i < ChInd5N; i++) {//loop across channels
             if (Sl5[i]>0) {//Sl frames after peak value
                 ChS5Min = Qmax [ChInd5a[i][0]][dt]/Qd [ChInd5a[i][0]];
                 a5=0;
@@ -1576,7 +1576,7 @@ void Detection::Iterate(short** vm, long t0) {
                         ChS5Min=Qmax [ChInd5a[i][ii]][dt] / Qd [ChInd5a[i][ii]];
                     }
                 }
-                a5+=4*Qmax[ChInd5[i],dt]/ Qd [ChInd5[i]];
+                a5+=4*Qmax[ChInd5[i]][dt]/ Qd [ChInd5[i]];
                 a5 /= 7;
                 //TREATMENT OF THRESHOLD CROSSINGS
                 //default
@@ -1640,11 +1640,11 @@ void Detection::Iterate(short** vm, long t0) {
                                 Lmx=Lm;
                             }
                         }
-                        wShapes << ChInd5[i] << " " << ((QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale) << " " << b << " " << Lmx << " ";
+                        wShapes << ChInd5[i] << " " << (QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale << " " << b << " " << Lmx << " ";
                         for (int jj=0; jj<tCut; jj++){
                             wShapes << tShape[jj] << " ";
                         }
-                        for (int ch : ChInd5a[i]){
+                        for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
                                 tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
@@ -1668,12 +1668,12 @@ void Detection::Iterate(short** vm, long t0) {
                                     Lmx=Lm;
                                 }
                             }
-                            wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale) << " " << b << " " << Lmx << " ";
+                            wShapes << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                             for (int jj=0; jj<tCut; jj++){
                                 wShapes << tShape[jj] << " ";
                             }
                         }
-                        for (int ch : ChInd5b[i]){
+                        for (int ch = 0; i < 4; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
                                     tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
@@ -1698,7 +1698,7 @@ void Detection::Iterate(short** vm, long t0) {
                                         Lmx=Lm;
                                     }
                                 }
-                                wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                                wShapes << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                                 /*
                                 for (int jj=0; jj<tCut; jj++){
                                     wShapes.Write("{0} ", tShape[jj]);
@@ -1741,11 +1741,11 @@ void Detection::Iterate(short** vm, long t0) {
                                 Lmx=Lm;
                             }
                         }
-                        wShapes << ChInd5[i] << " " << ((QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale << " " << b << " " << Lmx << " ";
+                        wShapes << ChInd5[i] << " " << (QmPreD[ChInd5[i]]-Qm[ChInd5[i]])*2/Ascale << " " << b << " " << Lmx << " ";
                         for (int jj=0; jj<tCutLong; jj++){
                             wShapes << tShape[jj] << " ";
                         }
-                        for (int ch : ChInd5a[i]){
+                        for (int ch = 0; i < 4; i++){
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
                                 tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
@@ -1769,12 +1769,12 @@ void Detection::Iterate(short** vm, long t0) {
                                     Lmx=Lm;
                                 }
                             }
-                            wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                            wShapes << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                             for (int jj=0; jj<tCutLong; jj++){
                                 wShapes << tShape[jj] << " ";
                             }
                         }
-                        for (int ch : ChInd5b[i]){
+                        for (int ch = 0; i < 4; i++){
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
                                     tShape[jj+CutOffset-t/dfAbs] = vm[ch][jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
@@ -1799,7 +1799,7 @@ void Detection::Iterate(short** vm, long t0) {
                                         Lmx=Lm;
                                     }
                                 }
-                                wShapes << ch << " " << ((QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
+                                wShapes << ch << " " << (QmPreD[ch]-Qm[ch])*2/Ascale << " " << b << " " << Lmx << " ";
                                 /*
                                 for (int jj=0; jj<tCutLong; jj++){
                                     wShapes.Write("{0} ", tShape[jj]);
@@ -1829,7 +1829,7 @@ void Detection::Iterate(short** vm, long t0) {
                 //}
             }
             //else if (ChInd5[i]>-1){
-            //if (Qmax[ChInd5[i],dt]>(thr5*Qd[i])){
+            //if (Qmax[ChInd5[i]][dt]>(thr5*Qd[i])){
             else if (Z5next [i] == 0) {
                 ChS5Min = Qmax [ChInd5a [i] [0]][dt] / Qd [ChInd5a [i] [0]];
                 a5 = 0;
@@ -1952,7 +1952,7 @@ void Detection::FinishDetection(short** vm, int skipLast) {
         wInfo << "#Sum(product of channel and global fluctuations):\n";
         for (int ii=0; ii<13; ii++) {//loop across timelags
             for (int i=0; i<NChannels; i++) {//loop across channels
-                wInfo << SIprod [i, ii] << " ";
+                wInfo << SIprod [i][ii] << " ";
             }
             wInfo << "\n";
         }
@@ -1967,9 +1967,9 @@ void Detection::FinishDetection(short** vm, int skipLast) {
         wInfo << Vsqbias[i] << " ";
     }
     wInfo << "\n";
-    wInfo << "#Number of spikes (4 channel):\n");
+    wInfo << "#Number of spikes (4 channel):\n";
     wInfo << NSpikes4 << "\n";//to count spikes
-    wInfo << "#Number of spikes (5 channel):\n");
+    wInfo << "#Number of spikes (5 channel):\n";
     wInfo << NSpikes5 << "\n";//to count spikes
 
     w.close();
