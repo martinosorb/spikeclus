@@ -379,7 +379,7 @@ void Detection::openFiles(const std::string& name) {
     wMean.open(name + "_Avg"); // For avg. Voltage
 }
        
-void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to compute an approximate 33 percentile
+void Detection::AvgVoltageDefault(short* vm, long t0, int t) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
     //would need to correct for Aglobal
@@ -409,9 +409,9 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
             //want something that works in most cases
             Px = false;
             //assume that I already have the right value
-            P1 = 2*vm [i] [t]-Aglobal[t/dfAbs];
+            P1 = 2*vm [i*NChannels + t]-Aglobal[t/dfAbs];
             for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                Plowx = 2*vm [i] [t + tt * df]-Aglobal[(t+tt*df)/dfAbs];//factor of 3!
+                Plowx = 2*vm[i*NChannels + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];//factor of 3!
                 if (Plowx < P1) {
                     if (not Px) {
                         Px = true;
@@ -425,7 +425,7 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
             if (not Px) {//P1 was the lowest value
                 P1 = Plowx;
                 for (int tt=TauFilt1-2; tt>0; tt--) {
-                    Plowx = 2*vm [i] [t + tt * df]-Aglobal[(t+tt*df)/dfAbs];
+                    Plowx = 2*vm[i*NChannels + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];
                     if (Plowx < P1) {
                         P1 = Plowx;
                     }
@@ -511,9 +511,9 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
                 //want something that works in most cases
                 Px = false;
                 //assume that I already have the right value
-                P1 = 2*(vm [i] [t] + vm [i] [t + 1])-Aglobal[t]-Aglobal[t+1];
+                P1 = 2*(vm[i*NChannels + t] + vm[i*NChannels + t + 1])-Aglobal[t]-Aglobal[t+1];
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                    Plowx = 2*(vm [i] [t + 2 * tt] + vm [i] [t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
+                    Plowx = 2*(vm[i*NChannels + t + 2 * tt] + vm[i*NChannels + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
                     if (Plowx < P1) {
                         if (not Px) {
                             Px = true;
@@ -527,7 +527,7 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
                 if (!Px) {//P1 was the lowest value
                     P1 = Plowx;
                     for (int tt=TauFilt1-2; tt>0; tt--) {
-                        Plowx = 2*(vm [i] [t + 2 * tt] + vm [i] [t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
+                        Plowx = 2*(vm[i*NChannels + t + 2 * tt] + vm[i*NChannels + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
                         if (Plowx < P1) {
                             P1 = Plowx;
                         }
@@ -613,9 +613,9 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
                 //want something that works in most cases
                 Px = false;
                 //assume that I already have the right value
-                P1 = 2*(vm [i] [t] + vm [i] [t - 1])-Aglobal[t]-Aglobal[t-1];
+                P1 = 2*(vm[i*NChannels + t] + vm[i*NChannels + t - 1])-Aglobal[t]-Aglobal[t-1];
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                    Plowx = 2*(vm [i] [t - 2 * tt] + vm [i] [t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
+                    Plowx = 2*(vm[i*NChannels + t - 2 * tt] + vm[i*NChannels + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
                     if (Plowx < P1) {
                         if (not Px) {
                             Px = true;
@@ -629,7 +629,7 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
                 if (not Px) {//P1 was the lowest value
                     P1 = Plowx;
                     for (int tt=TauFilt1-2; tt>0; tt--) {
-                        Plowx = 2*(vm [i] [t - 2 * tt] + vm [i] [t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
+                        Plowx = 2*(vm[i*NChannels + t - 2 * tt] + vm[i*NChannels + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
                         if (Plowx < P1) {
                             P1 = Plowx;
                         }
@@ -697,14 +697,14 @@ void Detection::AvgVoltageDefault(short** vm, long t0, int t) { //want to comput
     //Console.WriteLine ("{0} {1} {2}",Avgs2[2120,0],Avgs2[2120,1], Avgs2[2120,2]);
 }
 
-void Detection::InitialEstimation(short** vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
+void Detection::InitialEstimation(short* vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
     int tA;
     if (t0 == t0x) {
         //estimate Aglobal
         for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
             tA = t / dfAbs;
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
+                Slice [i] = (vm[i*NChannels + t]) % 4095 + (vm[i*NChannels + t + df]) % 4095;
             }
             std::sort(&Slice[0], &Slice[NChannels+1]);
             Aglobal [tA] = Slice [NChannels / 2];
@@ -736,13 +736,13 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
         for (int t=tx; dfSign*t<dfSign*ti; t+=df) {
             tA = t / dfAbs;
             for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
-                vSmth [i] = vm [i] [t];
+                vSmth [i] = vm[i*NChannels + t];
                 for (int ii=1; ii<tSmth; ii++) {
-                    vSmth [i] += vm [i] [t + ii * df];
+                    vSmth [i] += vm[i*NChannels + t + ii * df];
                 }
                 vSmth [i] *= AscaleV;
                 //CHANNEL OUT OF LINEAR REGIME
-                if (((vm [i] [t + 2*df] + 4) % 4096) < 10) {
+                if (((vm[i*NChannels + t + 2*df] + 4) % 4096) < 10) {
                     if (A [i] < artT) {//reset only when it starts leaving the linear regime
                         A [i] = artT;
                     }
@@ -774,7 +774,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice[i]=(vm [i][t])%4095+(vm[i][t+df])%4095;
+            Slice[i]=(vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095;
         }
         std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA]=Slice[NChannels / 2];
@@ -788,9 +788,9 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm [i] [ti - df];
+        vSmth [i] = vm[i*NChannels + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm [i] [ti + ii * df];
+            vSmth [i] += vm[i*NChannels + ti + ii * df];
         }
         vSmth [i] *= AscaleV;
     }
@@ -802,13 +802,13 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
             AvgVoltageDefault (vm, t0, t+TauFiltOffset);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm [i] [t+ tSmth1 * df]-vm [i] [t - df]) *AscaleV;
+            vSmth [i] += (vm[i*NChannels + t+ tSmth1 * df]-vm[i*NChannels + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         // SPIKE DETECTION
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm [i] [t + df] + 4) % 4096) < 10) {
+            if (((vm[i*NChannels + t + df] + 4) % 4096) < 10) {
                 if (A [i] < artT) {//reset only when it starts leaving the linear regime
                     A [i] = artT;
                 }
@@ -817,7 +817,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
             else if (A [i] == 0) {
                 QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
-                //vm[i][t-df]+vm[i][t]+vm[i][t+df]
+                //vm[i*NChannels + t-df]+vm[i*NChannels + t]+vm[i*NChannels + t+df]
                 Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
                 if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
                     if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
@@ -826,7 +826,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
                         FVbias [i]--;
                     }//Qdiff negative-->Ascale!!!;
                 }
-                //Qdiff [i][dt] = (vm [i] [t - df] + vm [i] [t] + vm [i] [t + df] - Aglobal[tA]) * Ascale - Qm [i];//difference between ADC counts and Qm
+                //Qdiff [i][dt] = (vm[i*NChannels + t - df] + vm[i*NChannels + t] + vm[i*NChannels + t + df] - Aglobal[tA]) * Ascale - Qm [i];//difference between ADC counts and Qm
                 //UPDATE Qm and Qd
                 if (Qdiff [i][dt] > 0) {
                     if (Qdiff [i][dt] > Qd [i]) {
@@ -874,7 +874,7 @@ void Detection::InitialEstimation(short** vm, long t0) { //use this to get a bet
     }
 }
 
-void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
+void Detection::StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
     /** Not necessary
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
@@ -927,7 +927,7 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
     for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t+df]) % 4095;
+            Slice [i] = (vm[i*NChannels + t]) % 4095 + (vm[i*NChannels + t+df]) % 4095;
         }
         std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA] = Slice [NChannels / 2];
@@ -969,15 +969,15 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
         //now have to change voltage
         //can use Qm?
         for (int i=1; i<NChannels; i++) {//loop across channels
-            vSmth [i] = vm [i] [t];
+            vSmth [i] = vm[i*NChannels + t];
             for (int ii=1; ii<tSmth; ii++) {
-                vSmth [i] += vm [i] [t + ii * df];
+                vSmth [i] += vm[i*NChannels + t + ii * df];
             }
             vSmth [i] *= AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
-            //QmPre[i]=(vm[i][t]+vm [i][t+df]+vm[i][t+2*df]-Aglobal[tA])*Ascale;
+            //QmPre[i]=(vm[i*NChannels + t]+vm[i*NChannels + t+df]+vm[i*NChannels + t+2*df]-Aglobal[tA])*Ascale;
         //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i][t])%4095+(vm[i][t+df])%4095+(vm[i][t+2*df])%4095);
+        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095+(vm[i*NChannels + t+2*df])%4095);
         }
 
         //Array.Sort(Slice);
@@ -986,7 +986,7 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
         wMean << Aglobal[tA] << "\n";
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm[i][t+2*df]+4)%4096)<10) {
+            if (((vm[i*NChannels + t+2*df]+4)%4096)<10) {
                 if (A[i]<artT) {//reset only when it starts leaving the linear regime
                     A[i]=artT;
                     QmPreD[i] = 0;
@@ -994,7 +994,7 @@ void Detection::StartDetection(short** vm, long t0, long nFrames, double nSec, d
             }
             else {
                 QmPreD[i]  += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre [i]+QmPreD [i])/3;//update Qm vm[i][t]+vm[i][t+df]+vm[i][t+2*df]
+                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre [i]+QmPreD [i])/3;//update Qm vm[i*NChannels + t]+vm[i*NChannels + t+df]+vm[i*NChannels + t+2*df]
             }
         }
     }
@@ -1024,7 +1024,7 @@ void Detection::skipLastReverse(int skipLast) {
     }
 }
 
-void Detection::Iterate(short** vm, long t0) {
+void Detection::Iterate(short* vm, long t0) {
     //int qq;
     int a4;//to buffer the difference between ADC counts and Qm
     int a5;//to buffer the difference between ADC counts and Qm
@@ -1047,7 +1047,7 @@ void Detection::Iterate(short** vm, long t0) {
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice[i]=(vm [i][t])%4095+(vm[i][t+df])%4095;
+            Slice[i]=(vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095;
         }
         std::sort(&Slice[0], &Slice[NChannels+1]);
         Aglobal[tA]=Slice[NChannels / 2];
@@ -1061,9 +1061,9 @@ void Detection::Iterate(short** vm, long t0) {
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm [i] [ti - df];
+        vSmth [i] = vm[i*NChannels + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm [i] [ti + ii * df];
+            vSmth [i] += vm[i*NChannels + ti + ii * df];
         }
         vSmth [i] *= AscaleV;
     }
@@ -1079,20 +1079,20 @@ void Detection::Iterate(short** vm, long t0) {
             AvgVoltageDefault (vm, t0, t+TauFiltOffset);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm [i] [t+ tSmth1 * df]-vm [i] [t - df]) *AscaleV;
+            vSmth [i] += (vm[i*NChannels + t+ tSmth1 * df]-vm[i*NChannels + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         ////for (int i=1; i<NChannels; i++) {//loop across channels
-        ////	QmPre[i]=(vm [i][t]+vm[i][t-df]+vm[i][t+df]-Aglobal[tA])*Ascale;
+        ////	QmPre[i]=(vm[i*NChannels + t]+vm[i*NChannels + t-df]+vm[i*NChannels + t+df]-Aglobal[tA])*Ascale;
         ////}
         //for (int i=1; i<NChannels; i++) {//loop across channels
-        //	QmPre[i]=((vm[i][t-df])%4095+(vm[i][t])%4095+(vm[i][t+df])%4095)*Ascale;
+        //	QmPre[i]=((vm[i*NChannels + t-df])%4095+(vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095)*Ascale;
         //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
         //	//if (i == 2120) {
         //	//	Console.WriteLine (QmPreD [i]);
         //	//}
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i][t])%4095+(vm[i][t+df])%4095+(vm[i][t+2*df])%4095);
-        //	//Slice[i]=((vm[i][t-df])%4095+(vm[i][t])%4095+(vm[i][t+df])%4095);
+        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095+(vm[i*NChannels + t+2*df])%4095);
+        //	//Slice[i]=((vm[i*NChannels + t-df])%4095+(vm[i*NChannels + t])%4095+(vm[i*NChannels + t+df])%4095);
         //}
         //Array.Sort(Slice);
         //if (ACF) {
@@ -1155,12 +1155,12 @@ void Detection::Iterate(short** vm, long t0) {
         // SPIKE DETECTION
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm[i][t+df]+4)%4096)<10) {
+            if (((vm[i*NChannels + t+df]+4)%4096)<10) {
                 if (A[i]<artT) {//reset only when it starts leaving the linear regime
                     /*
                     if (ACF) {
                         for (int ii=0; ii<Math.Min(artT-A[i],6); ii++) {//is only for one step in the past...ignoring others
-                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm [i] [t + (6 - ii) * df] - vm [i] [t + (3 - ii) * df]) / Ascale;
+                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm[i*NChannels + t + (6 - ii) * df] - vm[i*NChannels + t + (3 - ii) * df]) / Ascale;
                         }
                     }
                     */
@@ -1175,15 +1175,15 @@ void Detection::Iterate(short** vm, long t0) {
                 QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
                 /*
                 if (ACF) {
-                    SqIv [i] += (vm [i] [t + df] - vm [i] [t - 2 * df]) * (vm [i] [t + df] - vm [i] [t - 2 * df]);
+                    SqIv [i] += (vm[i*NChannels + t + df] - vm[i*NChannels + t - 2 * df]) * (vm[i*NChannels + t + df] - vm[i*NChannels + t - 2 * df]);
                     for (int iii=-6; iii<7; iii++) {
-                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm [i] [t + (1 + iii) * df] - vm [i] [t - (2 - iii) * df]) / Ascale;
+                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm[i*NChannels + t + (1 + iii) * df] - vm[i*NChannels + t - (2 - iii) * df]) / Ascale;
                         //t-8...t+7
                     }
                 }
                 */
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
-                //vm[i][t-df]+vm[i][t]+vm[i][t+df]
+                //vm[i*NChannels + t-df]+vm[i*NChannels + t]+vm[i*NChannels + t+df]
                 Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
                 if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
                     if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
@@ -1215,7 +1215,7 @@ void Detection::Iterate(short** vm, long t0) {
             }
             //AFTER CHANNEL WAS OUT OF LINEAR REGIME
             else {
-                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i][t-df]+vm[i][t]+vm[i][t+df]
+                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i*NChannels + t-df]+vm[i*NChannels + t]+vm[i*NChannels + t+df]
                 if (A [i] == artT) {
                     QmPreD[i] = 0;
                 }
@@ -1922,11 +1922,11 @@ void Detection::Iterate(short** vm, long t0) {
     }
 }
 
-void Detection::FinishDetection(short** vm, int skipLast) {
+void Detection::FinishDetection(short* vm, int skipLast) {
     if (df > 0) {
         for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
+                Slice [i] = (vm[i*NChannels + t]) % 4095 + (vm[i*NChannels + t + df]) % 4095;
             }
             std::sort(&Slice[0], &Slice[NChannels+1]);
             wMean << Slice [NChannels / 2] << "\n";
@@ -1934,7 +1934,7 @@ void Detection::FinishDetection(short** vm, int skipLast) {
     } else {
         for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm [i] [t]) % 4095 + (vm [i] [t + df]) % 4095;
+                Slice [i] = (vm[i*NChannels + t]) % 4095 + (vm[i*NChannels + t + df]) % 4095;
             }
             std::sort(&Slice[0], &Slice[NChannels+1]);
             wMean << Slice [NChannels / 2] << "\n";
