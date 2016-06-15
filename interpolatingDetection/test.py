@@ -10,13 +10,14 @@ import os
 # rawpath = 'data/'
 # rawfile = rawpath+'P29_16_05_14_retina02_left_stim2_smallarray_fullfield_raw3'
 
-rawpath = os.environ['HOME'] + '/data/' # Testing in local folder
-rawfile = rawpath + 'P29_16_05_14_retina02_left_stim2_smallarray_fullfield_raw3'
+rawpath = '/media/albert/OS/data/'
+rawfile = rawpath + 'P29_16_05_14_retina02_left_stim3_fullarray_fullfield_raw'
 
 print(rawfile)
 
-sampling = 23199.0903585
+sampling = 7022.05819854542
+seconds = 1
 
 # run detection
-nDumpFrames = int(sampling * 20)  # nFrames;  how many frames to analyze
+nDumpFrames = int(sampling * seconds)  # nFrames
 interpDetect(rawfile, sampling, nDumpFrames)

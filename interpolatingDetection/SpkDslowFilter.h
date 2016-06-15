@@ -147,8 +147,8 @@ class InterpDetection {
 	const int dtEMx = 2;
 	int dtEx=dtEMx-1;
 
-	int ChInd4aN = 0;
-	int ChInd5N = 0;
+	int ChInd4ListSize;
+	int ChInd5ListSize;
 	//Files to save the spikes etc.
 	std::ofstream w; //for spikes
 	std::ofstream wShapes; //for raw data
