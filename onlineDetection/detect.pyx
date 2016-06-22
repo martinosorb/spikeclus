@@ -5,16 +5,18 @@ import cython
 import numpy as np
 cimport numpy as np
 cimport cython
-import h5py
 from ctypes import CDLL
 import ctypes
+import h5py
 import time
-from datetime import datetime
+import multiprocessing
+import os
 
 cdef extern from "SpkDonline.h" namespace "SpkDonline":
     cdef cppclass Detection:
         Detection() except +
-        void InitDetection(long nFrames, double nSec, int sf, int NCh, long ti, long int * Indices)
+        void InitDetection(long nFrames, double nSec, int sf, int NCh, long ti, 
+                           long int * Indices, unsigned int nCPU)
         void SetInitialParams(int thres, int maa, int ahpthr, int maxsl, int minsl)
         void openSpikeFile(const char * name)
         void MedianVoltage(unsigned short * vm)
@@ -24,80 +26,105 @@ cdef extern from "SpkDonline.h" namespace "SpkDonline":
         void FinishDetection()
 
 
-def detect(rawfilename, sfd, nDumpFrames, parallel = False):
-    """ Read data from a (custom, any other format would work) hdf5 file and pipe it to the spike detector. """
-    rf = h5py.File(rawfilename + '.hdf5', 'r')
-    cx, cy = rf['x'].value, rf['y'].value
-    x1, x2, y1, y2 = np.min(cx), np.max(cx), np.min(cy), np.max(cy)
-    nRecCh = len(cx)
-    nFrames = len(rf['Ch0'])
-    nSec = nFrames / sfd  # the duration in seconds of the recording
-    sf = int(sfd)
-    nSec = nDumpFrames / sfd
+def detect(filePath, parallel = True):
+ 
+    # Read data from a .brw (HDF5) file
+    rf = h5py.File(filePath, 'r')
 
-    # number of frames to read in  one go
-    # the main bottleneck is reading the data, so this should be large if
-    # memory permits
-    tInc = nDumpFrames-1 # 20000
-    tCut = int(1.0 * sf / 1000 + 1.0 * sf / 1000 + 6)
+    # Read recording variables
+    recVars = rf.require_group('3BRecInfo/3BRecVars/')
+    bitDepth = recVars['BitDepth'].value[0]
+    maxV = recVars['MaxVolt'].value[0]
+    minV = recVars['MinVolt'].value[0]
+    nFrames = recVars['NRecFrames'].value[0]
+    samplingRate = recVars['SamplingRate'].value[0]
+    signalInv = recVars['SignalInversion'].value[0]
 
-    print("# Sampling rate: " + str(sf))
-    print("# Number of recorded channels: " + str(nRecCh))
-    print("# Analysing frames: " + str(nDumpFrames) + ", Seconds:" +
-          str(nSec) + ", tCut:" + str(tCut) + ", tInc:" + str(tInc))
+    # Read chip variables
+    chipVars = rf.require_group('3BRecInfo/3BMeaChip/')
+    nRows = chipVars['NRows'].value[0]
+    nCols = chipVars['NCols'].value[0]
+    nRecCh = nRows * nCols
 
-    # Messy! To be consistent, X and Y have to be swappped
-    cdef np.ndarray[long, mode = "c"] Indices = np.zeros(nRecCh, dtype=long)
-    for i in range(nRecCh):
-        Indices[i] = (cy[i] - 1) + 64 * (cx[i] - 1)
-        
-    cdef Detection * det = new Detection()
-    det.InitDetection(nFrames, nSec, sf, nRecCh, tInc, & Indices[0])
-    det.SetInitialParams(9, 5, 0, 8, 3)
+    # Compute indices
+    rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value
+    chIndices = [(x-1) + (y-1)*nCols for (x,y) in rawIndices] # Swap X and Y
     
-    # open output file
-    spikefilename = str.encode(rawfilename + "_Spikes.txt")
+    # Duration of the recording in seconds
+    nSec = nFrames / samplingRate
+
+    # Number of frames to read in one go (fit to the amount of available memory)
+    tInc = max(nFrames, 10000)
+
+    # Overlap across iterations
+    tCut = int(0.001*int(samplingRate)) + int(0.001*int(samplingRate)) + 6
+
+    # Number of processors available
+    if parallel:
+        nCPU = multiprocessing.cpu_count()
+    else:
+        nCPU = 1
+
+    # Start detection
+    print 'Starting detection...'
+    print '# Using', nCPU, 'core(s)'
+    print '# Sampling rate:', samplingRate
+    print '# Number of recorded channels:', nRecCh
+    print '# Analysing frames:', nFrames, 'Seconds:', nSec, 'tCut:', tCut, 'tInc:', tInc
+    cdef Detection * det = new Detection()
+
+    # Allocate indices and vm
+    cdef np.ndarray[long, mode = "c"] Indices = np.asarray(chIndices, dtype=ctypes.c_long)
+    cdef np.ndarray[unsigned short, mode = "c"] vm = np.zeros((nRecCh * tInc), dtype=ctypes.c_ushort)
+    
+    # Initialise detection algorithm
+    det.InitDetection(nFrames, nSec, int(samplingRate), nRecCh, tInc, &Indices[0], nCPU)
+
+    # Set the parameters: int thres, int maa, int ahpthr, int maxsl,  int minsl
+    # det.SetInitialParams(9, 5, 0, 8, 3)
+    
+    # Open output file
+    spikefilename = str.encode(os.path.splitext(filePath)[0] + "_Spikes.txt")
     det.openSpikeFile(spikefilename)
 
-    cdef np.ndarray[unsigned short, ndim = 1, mode = "c"] vm = np.zeros((nRecCh * tInc), dtype=ctypes.c_ushort)
-    startTime = datetime.now()
+    # Setup timers  
+    readT = medianT = iterateT = 0.0; 
     
-    readT = medianT = iterateT = 0.0;
-    
-    for t0 in range(0, nDumpFrames - tInc, tInc - tCut):
-        print 'Start!'
-        tic = time.time()
-        if (t0 / tInc) % 100 == 0:
-            print(str(t0 / sf) + " sec")
-        for c in range(nRecCh):
-            vm[c * tInc:c * tInc + tInc] = rf['Ch' +
-                                              str(c)][t0:t0 + tInc].astype(dtype=ctypes.c_ushort)
-        readT += time.time() - tic
-        print 'readT', readT
+    # For each chunk of data 
+    for t0 in range(0, nFrames, tInc - tCut):
+        t1 = t0 + tInc 
 
-        tic = time.time()
-        det.MedianVoltage(&vm[0])
-        #det.MeanVoltage( & vm[0])  # a bit faster (maybe)
-        medianT += time.time() - tic
-        print 'medianT', medianT
+        if t1 > nFrames: # TODO - The last chunk is potentially smaller. 
+            continue
+
+        print 'Iteration', str(1 + t0/(tInc - tCut)) + '/' + str(1 + (nFrames - tInc)/(tInc - tCut)),':'
         
+        # Read data
+        print '# Reading', t1-t0, 'frames...'
         tic = time.time()
-        if not parallel: # Sequential
-            det.Iterate(&vm[0], t0)
-        else: # Parallel 
-            det.IterateParallel(&vm[0], t0)
-        iterateT += time.time() - tic
-        print 'iterateT', iterateT
+        vm = rf['3BData/Raw'][t0:t1].flatten() # !!! Indexed by time-step: vm[channel + time * NChannels]
+        readT += time.time() - tic
 
-        print 'End!'
+        # Compute median voltage
+        print '# Computing median voltage...'
+        tic = time.time()
+        det.MedianVoltage(&vm[0]) # det.MeanVoltage(&vm[0])
+        medianT += time.time() - tic
+        
+        # Detect spikes
+        print '# Detecting spikes...'
+        tic = time.time()
+        if parallel:
+            det.IterateParallel(&vm[0], t0)
+        else:
+            det.Iterate(&vm[0], t0) # Deprecated
+        iterateT += time.time() - tic
+
     det.FinishDetection()
-    endTime = datetime.now()
-    print('Time taken for detection: ' + str(endTime - startTime))
-    print('Time per frame: ' + str(1000 * (endTime - startTime) / (nDumpFrames)))
-    print('Time per sample: ' + str(1000 *
-                                    (endTime - startTime) / (nRecCh * nDumpFrames)))
-                                    
-    print '\nDebug times:'
-    print '  Read:', readT ,'s'
-    print '  Median:', medianT,'s'
-    print '  Iterate:', iterateT,'s'
+
+    totalT = readT + medianT + iterateT
+    print '# Elapsed time:', totalT, 's'
+    print '# (Reading:', readT ,'s)'
+    print '# (Median:', medianT,'s)'
+    print '# (Detecting:', iterateT,'s)'
+    print '# (Per frame:', 1000*totalT/nFrames, 'ms)'

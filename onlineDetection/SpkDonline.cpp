@@ -1,10 +1,10 @@
 #include "SpkDonline.h"
 
 namespace SpkDonline {
-Detection::Detection() {}
+Detection::Detection() { }
 
 void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh,
-                              long ti, long *Indices) {
+                              long ti, long *Indices, unsigned int nCPU) {
   NChannels = NCh;
   tInc = ti;
   Qd = new int[NChannels];      // noise amplitude
@@ -33,8 +33,7 @@ void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh,
     ChInd[i] = Indices[i];
   }
   
-  nthreads = (int) std::thread::hardware_concurrency();  
-  std::cout << "# Number of threads for the parallel version: " << nthreads << std::endl;   
+  nthreads = nCPU;
   threads = new std::thread[nthreads];
 }
 
@@ -68,7 +67,7 @@ void Detection::MedianVoltage(unsigned short *vm) // easier to interpret, though
   // the linear regime then) as signals are about 15% correlated
   for (int t = 0; t < tInc; t++) { // this function wastes most of the time
     for (int i = 0; i < NChannels; i++) { // loop across channels
-      Slice[i] = vm[i * tInc + t];        // vm [i] [t];
+      Slice[i] = vm[i + t*NChannels];        // vm [i] [t];
     }
     std::sort(Slice, Slice + sizeof Slice / sizeof Slice[0]);
     Aglobal[t] = Slice[NChannels / 2];
@@ -86,8 +85,8 @@ void Detection::MeanVoltage(unsigned short *vm) // if median takes too long...
     n = 1; // constant offset doesn't matter, avoid zero division
     Vsum = 0;
     for (int i = 0; i < NChannels; i++) { // loop across channels
-      if (((vm[i * tInc + t] + 4) % 4096) > 10) {
-        Vsum += (vm[i * NChannels + t]);
+      if (((vm[i + t*NChannels] + 4) % NChannels) > 10) {
+        Vsum += (vm[i + t*NChannels]); // Indexing changed
         n++;
       }
     }
@@ -104,7 +103,7 @@ void Detection::Iterate(unsigned short *vm, long t0) {
               // SPIKE DETECTION
     for (int i = 0; i < NChannels; i++) { // loop across channels
                                           // CHANNEL OUT OF LINEAR REGIME
-      if (((vm[i * tInc + t] + 4) % 4096) < 10) {
+      if (((vm[i + t*NChannels] + 4) % NChannels) < 10) {
         if (A[i] <
             artT) { // reset only when it starts leaving the linear regime
           Sl[i] = 0;
@@ -113,7 +112,7 @@ void Detection::Iterate(unsigned short *vm, long t0) {
       }
       // DEFAULT OPERATIONS
       else if (A[i] == 0) {
-        a = (vm[i * tInc + t] - Aglobal[t]) * Ascale -
+        a = (vm[i + t*NChannels] - Aglobal[t]) * Ascale -
             Qm[i]; // difference between ADC counts and Qm
         // UPDATE Qm and Qd
         if (a > 0) {
@@ -169,7 +168,7 @@ void Detection::Iterate(unsigned short *vm, long t0) {
       }
       // AFTER CHANNEL WAS OUT OF LINEAR REGIME
       else {
-        Qm[i] = (2 * Qm[i] + (vm[i * NChannels + t] - Aglobal[t]) * Ascale +
+        Qm[i] = (2 * Qm[i] + (vm[i + t*NChannels] - Aglobal[t]) * Ascale +
                  2 * Qd[i]) /
                 3; // update Qm
         A[i]--;
@@ -191,7 +190,7 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
   // Loop accross all channels associated to this thread
   for (int i = threadID*chunkSize; i < NChannels and i < (threadID+1)*chunkSize; i++) { 
     // CHANNEL OUT OF LINEAR REGIME
-    if (((vm[i * tInc + t] + 4) % 4096) < 10) {
+    if (((vm[i + t*NChannels] + 4) % NChannels) < 10) {
       if (A[i] < artT) { // reset only when it starts leaving the linear regime
         Sl[i] = 0;
         A[i] = artT;
@@ -200,7 +199,7 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
     // DEFAULT OPERATIONS
     else if (A[i] == 0) {
       // Difference between ADC counts and Qm
-      a = (vm[i * tInc + t] - Aglobal[t]) * Ascale - Qm[i]; 
+      a = (vm[i + t*NChannels] - Aglobal[t]) * Ascale - Qm[i]; 
       // UPDATE Qm and Qd
       if (a > 0) {
         if (a > Qd[i]) {
@@ -261,7 +260,7 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
     }
     // AFTER CHANNEL WAS OUT OF LINEAR REGIME
     else {
-      Qm[i] = (2 * Qm[i] + (vm[i * NChannels + t] - Aglobal[t]) * Ascale +
+      Qm[i] = (2 * Qm[i] + (vm[i + t*NChannels] - Aglobal[t]) * Ascale +
                 2 * Qd[i]) /
               3; // update Qm
       A[i]--;

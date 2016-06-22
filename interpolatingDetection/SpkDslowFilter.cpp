@@ -380,7 +380,7 @@ void InterpDetection::openFiles(const std::string& name) {
     wMean.open(name + "_Avg"); // For avg. Voltage
 }
        
-void InterpDetection::AvgVoltageDefault(short* vm, long t0, int t) { //want to compute an approximate 33 percentile
+void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
     //would need to correct for Aglobal
@@ -698,7 +698,7 @@ void InterpDetection::AvgVoltageDefault(short* vm, long t0, int t) { //want to c
     //Console.WriteLine ("{0} {1} {2}",Avgs2[2120,0],Avgs2[2120,1], Avgs2[2120,2]);
 }
 
-void InterpDetection::InitialEstimation(short* vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
+void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use this to get a better initial estimate of Qd. only fast transients.
     int tA;
     if (t0 == t0x) {
         //estimate Aglobal
@@ -875,7 +875,7 @@ void InterpDetection::InitialEstimation(short* vm, long t0) { //use this to get 
     }
 }
 
-void InterpDetection::StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
+void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
     /** Not necessary
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
@@ -1025,7 +1025,7 @@ void InterpDetection::skipLastReverse(int skipLast) {
     }
 }
 
-void InterpDetection::Iterate(short* vm, long t0) {
+void InterpDetection::Iterate(unsigned short* vm, long t0) {
     //int qq;
     int a4;//to buffer the difference between ADC counts and Qm
     int a5;//to buffer the difference between ADC counts and Qm
@@ -1934,7 +1934,7 @@ void InterpDetection::Iterate(short* vm, long t0) {
     }
 }
 
-void InterpDetection::FinishDetection(short* vm, int skipLast) {
+void InterpDetection::FinishDetection(unsigned short* vm, int skipLast) {
     if (df > 0) {
         for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels

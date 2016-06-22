@@ -56,7 +56,7 @@ public:
   Detection();
   ~Detection();
   void InitDetection(long nFrames, double nSec, int sf, int NCh, long ti,
-                     long int *Indices);
+                     long int *Indices, unsigned int nCPU);
   void SetInitialParams(int thres, int maa, int ahpthr, int maxsl, int minsl);
   void openSpikeFile(const char *name);
   void MedianVoltage(unsigned short *vm);

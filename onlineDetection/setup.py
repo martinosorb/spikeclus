@@ -19,5 +19,5 @@ setup(
            language="c++",
            extra_compile_args=['-std=c++11'],
            )),
-    include_dirs=[numpy.get_include()], requires=['numpy', 'h5py']
+    include_dirs=[numpy.get_include()], requires=['h5py']
 )

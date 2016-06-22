@@ -165,11 +165,11 @@ public:
 	~InterpDetection();
 	int* SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices);
 	void openFiles(const std::string& name);
-	void AvgVoltageDefault(short* vm, long t0, int t); //want to compute an approximate 33 percentile
-	void InitialEstimation(short* vm, long t0); //use this to get a better initial estimate of Qd. only fast transients.
-	void StartDetection(short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices);
+	void AvgVoltageDefault(unsigned short* vm, long t0, int t); //want to compute an approximate 33 percentile
+	void InitialEstimation(unsigned short* vm, long t0); //use this to get a better initial estimate of Qd. only fast transients.
+	void StartDetection(unsigned short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices);
 	void skipLastReverse(int skipLast);
-	void Iterate(short* vm, long t0);
-	void FinishDetection(short* vm, int skipLast);
+	void Iterate(unsigned short* vm, long t0);
+	void FinishDetection(unsigned short* vm, int skipLast);
 };
 };
