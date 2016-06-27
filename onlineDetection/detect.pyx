@@ -7,7 +7,7 @@ cimport numpy as np
 cimport cython
 from ctypes import CDLL
 import ctypes
-import h5py
+from readUtils import openHDF5file, getHDF5params, readHDF5
 import time
 import multiprocessing
 import os
@@ -22,48 +22,26 @@ cdef extern from "SpkDonline.h" namespace "SpkDonline":
         void MedianVoltage(unsigned short * vm)
         void MeanVoltage(unsigned short * vm)
         void Iterate(unsigned short * vm, long t0)
-        void IterateParallel(unsigned short * vm, long t0)
         void FinishDetection()
 
 
-def detect(filePath, parallel = True):
+def detect(filePath):
  
     # Read data from a .brw (HDF5) file
-    rf = h5py.File(filePath, 'r')
-
-    # Read recording variables
-    recVars = rf.require_group('3BRecInfo/3BRecVars/')
-    bitDepth = recVars['BitDepth'].value[0]
-    maxV = recVars['MaxVolt'].value[0]
-    minV = recVars['MinVolt'].value[0]
-    nFrames = recVars['NRecFrames'].value[0]
-    samplingRate = recVars['SamplingRate'].value[0]
-    signalInv = recVars['SignalInversion'].value[0]
-
-    # Read chip variables
-    chipVars = rf.require_group('3BRecInfo/3BMeaChip/')
-    nRows = chipVars['NRows'].value[0]
-    nCols = chipVars['NCols'].value[0]
-    nRecCh = nRows * nCols
-
-    # Compute indices
-    rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value
-    chIndices = [(x-1) + (y-1)*nCols for (x,y) in rawIndices] # Swap X and Y
-    
+    rf = openHDF5file(filePath)
+    nFrames, samplingRate, nRecCh, chIndices = getHDF5params(rf)
+   
     # Duration of the recording in seconds
     nSec = nFrames / samplingRate
 
     # Number of frames to read in one go (fit to the amount of available memory)
-    tInc = max(nFrames, 10000)
+    tInc = nFrames - 1 # max(nFrames, 10000)
 
     # Overlap across iterations
     tCut = int(0.001*int(samplingRate)) + int(0.001*int(samplingRate)) + 6
 
     # Number of processors available
-    if parallel:
-        nCPU = multiprocessing.cpu_count()
-    else:
-        nCPU = 1
+    nCPU = multiprocessing.cpu_count()
 
     # Start detection
     print 'Starting detection...'
@@ -81,7 +59,9 @@ def detect(filePath, parallel = True):
     det.InitDetection(nFrames, nSec, int(samplingRate), nRecCh, tInc, &Indices[0], nCPU)
 
     # Set the parameters: int thres, int maa, int ahpthr, int maxsl,  int minsl
-    # det.SetInitialParams(9, 5, 0, 8, 3)
+    MaxSl = int(samplingRate * 1 / 1000 + 0.5) + 1 # compute as in C# program
+    MinSl = int(samplingRate * 0.3 / 1000 + 0.5)
+    det.SetInitialParams(9, 5, 0, MaxSl, MinSl)
     
     # Open output file
     spikefilename = str.encode(os.path.splitext(filePath)[0] + "_Spikes.txt")
@@ -95,29 +75,29 @@ def detect(filePath, parallel = True):
         t1 = t0 + tInc 
 
         if t1 > nFrames: # TODO - The last chunk is potentially smaller. 
-            continue
+            break
 
         print 'Iteration', str(1 + t0/(tInc - tCut)) + '/' + str(1 + (nFrames - tInc)/(tInc - tCut)),':'
         
         # Read data
         print '# Reading', t1-t0, 'frames...'
         tic = time.time()
-        vm = rf['3BData/Raw'][t0:t1].flatten() # !!! Indexed by time-step: vm[channel + time * NChannels]
+
+        # Data is ndexed by time-step: vm[channel + time * NChannels]
+        # must be inverted in order to match the old .brw format.
+        vm = readHDF5(rf, t0, t1)
         readT += time.time() - tic
 
         # Compute median voltage
         print '# Computing median voltage...'
         tic = time.time()
-        det.MedianVoltage(&vm[0]) # det.MeanVoltage(&vm[0])
+        det.MeanVoltage(&vm[0]) #  det.MedianVoltage(&vm[0]) 
         medianT += time.time() - tic
         
         # Detect spikes
         print '# Detecting spikes...'
         tic = time.time()
-        if parallel:
-            det.IterateParallel(&vm[0], t0)
-        else:
-            det.Iterate(&vm[0], t0) # Deprecated
+        det.Iterate(&vm[0], t0)
         iterateT += time.time() - tic
 
     det.FinishDetection()

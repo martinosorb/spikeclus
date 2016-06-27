@@ -4,6 +4,6 @@
 from detect import detect
 
 path = '/media/albert/OS/data/'
-fileName = '30.brw'
+fileName = '10.brw'
 
 detect(path + fileName)

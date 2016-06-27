@@ -1,7 +1,14 @@
 #include "SpkDonline.h"
 
 namespace SpkDonline {
-Detection::Detection() { }
+Detection::Detection() :
+	// Set default parameters
+	threshold(9), // threshold to detect spikes >11 is likely to be real spikes, but can and should be sorted afterwards
+	AHPthr(0),    // signal should go below that threshold within MaxSl-Slmin frames
+	MaxSl(8),     // dead time in frames after peak, used for further testing
+	MinAvgAmp(5), // minimal avg. amplitude of peak (in units of Qd)
+	MinSl(3)     // length considered for determining avg. spike amplitude
+{}
 
 void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh,
                               long ti, long *Indices, unsigned int nCPU) {
@@ -69,113 +76,39 @@ void Detection::MedianVoltage(unsigned short *vm) // easier to interpret, though
     for (int i = 0; i < NChannels; i++) { // loop across channels
       Slice[i] = vm[i + t*NChannels];        // vm [i] [t];
     }
-    std::sort(Slice, Slice + sizeof Slice / sizeof Slice[0]);
+    std::sort(Slice, Slice + NChannels);
     Aglobal[t] = Slice[NChannels / 2];
   }
 }
 
-void Detection::MeanVoltage(unsigned short *vm) // if median takes too long...
-                                                // or there are only few
-                                                // channnels (?)
-{
+void Detection::MeanVoltageThread(int threadID, unsigned short *vm) {
+
+  int chunkSize = std::ceil( (float) tInc/ (float) nthreads);
+
   int n;
   int Vsum;
-
-  for (int t = 0; t < tInc; t++) {
+  for (int t = threadID*chunkSize; t < tInc and t < (threadID+1)*chunkSize; t++) { 
     n = 1; // constant offset doesn't matter, avoid zero division
     Vsum = 0;
     for (int i = 0; i < NChannels; i++) { // loop across channels
       if (((vm[i + t*NChannels] + 4) % NChannels) > 10) {
-        Vsum += (vm[i + t*NChannels]); // Indexing changed
+        Vsum += (vm[i + t* NChannels ]); // !!! Indexing changed
         n++;
       }
     }
     Aglobal[t] = Vsum / n;
   }
+
 }
 
-void Detection::Iterate(unsigned short *vm, long t0) {
-  // int a; // to buffer the difference between ADC counts and Qm
-  // std::cout << t0 << " " << tInc << "\n";
-  // std::cout.flush();
-  for (int t = 0; t < tInc;
-       t++) { // loop over data, will be removed for an online algorithm
-              // SPIKE DETECTION
-    for (int i = 0; i < NChannels; i++) { // loop across channels
-                                          // CHANNEL OUT OF LINEAR REGIME
-      if (((vm[i + t*NChannels] + 4) % NChannels) < 10) {
-        if (A[i] <
-            artT) { // reset only when it starts leaving the linear regime
-          Sl[i] = 0;
-          A[i] = artT;
-        }
-      }
-      // DEFAULT OPERATIONS
-      else if (A[i] == 0) {
-        a = (vm[i + t*NChannels] - Aglobal[t]) * Ascale -
-            Qm[i]; // difference between ADC counts and Qm
-        // UPDATE Qm and Qd
-        if (a > 0) {
-          if (a > Qd[i]) {
-            Qm[i] += Qd[i] / Tau_m0;
-            if (a < (5 * Qd[i])) {
-              Qd[i]++;
-            } else if ((Qd[i] > Qdmin) & (a > (6 * Qd[i]))) {
-              Qd[i]--;
-            }
-          } else if (Qd[i] > Qdmin) { // set a minimum level for Qd
-            Qd[i]--;
-          }
-        } else if (a < -Qd[i]) {
-          Qm[i] -= Qd[i] / Tau_m0 / 2;
-        }
-        // TREATMENT OF THRESHOLD CROSSINGS
-        if (Sl[i] > 0) { // Sl frames after peak value
-          // default
-          Sl[i] = (Sl[i] + 1) % (MaxSl + 1); // increment Sl[i]
-          if (Sl[i] < MinSl) { // calculate area under first and second frame
-                               // after spike
-            SpkArea[i] += a;
-          }
-          // check whether it does repolarize
-          else if (a < (AHPthr * Qd[i])) {
-            AHP[i] = true;
-          }
-          // accept spikes after MaxSl frames if...
-          if ((Sl[i] == MaxSl) & (AHP[i])) {
-            if ((2 * SpkArea[i]) > (MinSl * MinAvgAmp * Qd[i])) {
-              w << ChInd[i] << " " << t0 + t - MaxSl + 1 << " "
-                << -Amp[i] * Ascale / Qd[i] << "\n";
-            }
-            Sl[i] = 0;
-          }
-          // check whether current ADC count is higher
-          else if (Amp[i] < a) {
-            Sl[i] = 1; // reset peak value
-            Amp[i] = a;
-            AHP[i] = false;  // reset AHP
-            SpkArea[i] += a; // not resetting this one (anyway don't need to
-                             // care if the spike is wide)
-          }
-        }
-        // check for threshold crossings
-        else if (a > ((threshold * Qd[i]) / 2)) {
-          Sl[i] = 1;
-          Amp[i] = a;
-          AHP[i] = false;
-          SpkArea[i] = a;
-        }
-      }
-      // AFTER CHANNEL WAS OUT OF LINEAR REGIME
-      else {
-        Qm[i] = (2 * Qm[i] + (vm[i + t*NChannels] - Aglobal[t]) * Ascale +
-                 2 * Qd[i]) /
-                3; // update Qm
-        A[i]--;
-      }
-    }
+void Detection::MeanVoltage(unsigned short *vm) {
+  for (int threadID = 0; threadID < nthreads; threadID++) {
+    threads[threadID] = std::thread( [=] { MeanVoltageThread(threadID, vm); });
   }
-} // Iterate
+  for (int threadID = 0; threadID < nthreads; threadID++) { 
+    threads[threadID].join();
+  }
+}
 
 void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
   
@@ -189,6 +122,7 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
 
   // Loop accross all channels associated to this thread
   for (int i = threadID*chunkSize; i < NChannels and i < (threadID+1)*chunkSize; i++) { 
+
     // CHANNEL OUT OF LINEAR REGIME
     if (((vm[i + t*NChannels] + 4) % NChannels) < 10) {
       if (A[i] < artT) { // reset only when it starts leaving the linear regime
@@ -270,7 +204,7 @@ void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
   }
 }
 
-void Detection::IterateParallel(unsigned short *vm, long t0) {
+void Detection::Iterate(unsigned short *vm, long t0) {
   // SPIKE DETECTION  
   for (int threadID = 0; threadID < nthreads; threadID++) {
     threads[threadID] = std::thread( [=] { IterateThread(threadID, vm, t0); });
