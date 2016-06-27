@@ -1395,7 +1395,6 @@ static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_frames[] = "frames...";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_nRecCh[] = "nRecCh";
-static const char __pyx_k_params[] = "params";
 static const char __pyx_k_tCut_2[] = "tCut";
 static const char __pyx_k_tInc_2[] = "tInc";
 static const char __pyx_k_totalT[] = "totalT";
@@ -1499,7 +1498,6 @@ static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_n_s_openHDF5file;
 static PyObject *__pyx_n_s_os;
-static PyObject *__pyx_n_s_params;
 static PyObject *__pyx_n_s_path;
 static PyObject *__pyx_n_s_print;
 static PyObject *__pyx_n_s_range;
@@ -1534,9 +1532,7 @@ static PyObject *__pyx_float_0_5;
 static PyObject *__pyx_float_0_001;
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
-static PyObject *__pyx_int_5;
 static PyObject *__pyx_int_6;
-static PyObject *__pyx_int_9;
 static PyObject *__pyx_int_1000;
 static PyObject *__pyx_tuple__3;
 static PyObject *__pyx_tuple__4;
@@ -2135,7 +2131,7 @@ static PyObject *__pyx_pf_6detect_detect(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *     MaxSl = int(samplingRate * 1 / 1000 + 0.5) + 1 # compute as in C# program
  *     MinSl = int(samplingRate * 0.3 / 1000 + 0.5)             # <<<<<<<<<<<<<<
  *     det.SetInitialParams(9, 5, 0, MaxSl, MinSl)
- *     print "params", 9, 5, 0, MaxSl, MinSl
+ * 
  */
   __pyx_t_3 = PyNumber_Multiply(__pyx_v_samplingRate, __pyx_float_0_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -2155,45 +2151,15 @@ static PyObject *__pyx_pf_6detect_detect(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *     MaxSl = int(samplingRate * 1 / 1000 + 0.5) + 1 # compute as in C# program
  *     MinSl = int(samplingRate * 0.3 / 1000 + 0.5)
  *     det.SetInitialParams(9, 5, 0, MaxSl, MinSl)             # <<<<<<<<<<<<<<
- *     print "params", 9, 5, 0, MaxSl, MinSl
+ * 
  *     # Open output file
  */
   __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_v_MaxSl); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L1_error)
   __pyx_t_13 = __Pyx_PyInt_As_int(__pyx_v_MinSl); if (unlikely((__pyx_t_13 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L1_error)
   __pyx_v_det->SetInitialParams(9, 5, 0, __pyx_t_14, __pyx_t_13);
 
-  /* "detect.pyx":65
- *     MinSl = int(samplingRate * 0.3 / 1000 + 0.5)
- *     det.SetInitialParams(9, 5, 0, MaxSl, MinSl)
- *     print "params", 9, 5, 0, MaxSl, MinSl             # <<<<<<<<<<<<<<
- *     # Open output file
- *     spikefilename = str.encode(os.path.splitext(filePath)[0] + "_Spikes.txt")
- */
-  __pyx_t_2 = PyTuple_New(6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_INCREF(__pyx_n_s_params);
-  __Pyx_GIVEREF(__pyx_n_s_params);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_params);
-  __Pyx_INCREF(__pyx_int_9);
-  __Pyx_GIVEREF(__pyx_int_9);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_9);
-  __Pyx_INCREF(__pyx_int_5);
-  __Pyx_GIVEREF(__pyx_int_5);
-  PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_int_5);
-  __Pyx_INCREF(__pyx_int_0);
-  __Pyx_GIVEREF(__pyx_int_0);
-  PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_int_0);
-  __Pyx_INCREF(__pyx_v_MaxSl);
-  __Pyx_GIVEREF(__pyx_v_MaxSl);
-  PyTuple_SET_ITEM(__pyx_t_2, 4, __pyx_v_MaxSl);
-  __Pyx_INCREF(__pyx_v_MinSl);
-  __Pyx_GIVEREF(__pyx_v_MinSl);
-  PyTuple_SET_ITEM(__pyx_t_2, 5, __pyx_v_MinSl);
-  if (__Pyx_Print(0, __pyx_t_2, 1) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
   /* "detect.pyx":67
- *     print "params", 9, 5, 0, MaxSl, MinSl
+ * 
  *     # Open output file
  *     spikefilename = str.encode(os.path.splitext(filePath)[0] + "_Spikes.txt")             # <<<<<<<<<<<<<<
  *     det.openSpikeFile(spikefilename)
@@ -5226,7 +5192,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
   {&__pyx_n_s_openHDF5file, __pyx_k_openHDF5file, sizeof(__pyx_k_openHDF5file), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
-  {&__pyx_n_s_params, __pyx_k_params, sizeof(__pyx_k_params), 0, 0, 1, 1},
   {&__pyx_n_s_path, __pyx_k_path, sizeof(__pyx_k_path), 0, 0, 1, 1},
   {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
@@ -5359,9 +5324,7 @@ static int __Pyx_InitGlobals(void) {
   __pyx_float_0_001 = PyFloat_FromDouble(0.001); if (unlikely(!__pyx_float_0_001)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_5 = PyInt_FromLong(5); if (unlikely(!__pyx_int_5)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_6 = PyInt_FromLong(6); if (unlikely(!__pyx_int_6)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_9 = PyInt_FromLong(9); if (unlikely(!__pyx_int_9)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1000 = PyInt_FromLong(1000); if (unlikely(!__pyx_int_1000)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;

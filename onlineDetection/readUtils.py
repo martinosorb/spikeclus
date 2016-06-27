@@ -1,3 +1,5 @@
+# 3Brain 3rd gen .brw (HDF5) 
+
 import h5py
 
 def openHDF5file(path):
@@ -20,11 +22,15 @@ def getHDF5params(rf):
     nRecCh = nRows * nCols
 
     # Compute indices
-    rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value
-    # chIndices = [(x-1) + (y-1)*nCols for (x,y) in rawIndices] # Swap X and Y (no longer required)
-    chIndices = [(x-1) + (y-1)*nCols for (y,x) in rawIndices] # Name channels ([0..4095] for fullarray files) 
+    rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value    
+
+    # Name channels ([0..4095] for fullarray files) 
+    chIndices = [(x-1) + (y-1)*nCols for (y,x) in rawIndices] 
+    # chIndices = [(x-1) + (y-1)*nCols for (x,y) in rawIndices] # Swap X and Y (old format)
 
     return (nFrames, samplingRate, nRecCh, chIndices)
 
 def readHDF5(rf, t0, t1):
+    ''' In order to use the algorithms designed for the old format, 
+    the input data must be inverted.'''
     return 4095 - rf['3BData/Raw'][t0:t1].flatten() 
