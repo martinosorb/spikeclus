@@ -372,12 +372,12 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
 }
       
 void InterpDetection::openFiles(const std::string& name) {
-    w.open(name + "_Spikes"); // For spikes
-    wShapes.open(name + "_Shapes"); // For raw data
-    wX.open(name + "_SpikesX"); // For spikes
-    wShapesX.open(name + "_ShapesX"); // For raw data
-    wInfo.open(name + "_Info"); // For other stuff
-    wMean.open(name + "_Avg"); // For avg. Voltage
+    w.open(name + "_INT_Spikes.txt"); // For spikes
+    wShapes.open(name + "_INT_Shapes.txt"); // For raw data
+    wX.open(name + "_INT_SpikesX.txt"); // For spikes
+    wShapesX.open(name + "_INT_ShapesX.txt"); // For raw data
+    wInfo.open(name + "_INT_Info.txt"); // For other stuff
+    wMean.open(name + "_INT_Avg.txt"); // For avg. Voltage
 }
        
 void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //want to compute an approximate 33 percentile
@@ -410,9 +410,9 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
             //want something that works in most cases
             Px = false;
             //assume that I already have the right value
-            P1 = 2*vm [i*NChannels + t]-Aglobal[t/dfAbs];
+            P1 = 2*vm[i*tInc + t]-Aglobal[t/dfAbs];
             for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                Plowx = 2*vm[i*df + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];//factor of 3!
+                Plowx = 2*vm[i*tInc + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];//factor of 3!
                 if (Plowx < P1) {
                     if (not Px) {
                         Px = true;
@@ -426,7 +426,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
             if (not Px) {//P1 was the lowest value
                 P1 = Plowx;
                 for (int tt=TauFilt1-2; tt>0; tt--) {
-                    Plowx = 2*vm[i*df + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];
+                    Plowx = 2*vm[i*tInc + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];
                     if (Plowx < P1) {
                         P1 = Plowx;
                     }
@@ -512,9 +512,9 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
                 //want something that works in most cases
                 Px = false;
                 //assume that I already have the right value
-                P1 = 2*(vm[i*df + t] + vm[i*df + t + 1])-Aglobal[t]-Aglobal[t+1];
+                P1 = 2*(vm[i*tInc + t] + vm[i*tInc + t + 1])-Aglobal[t]-Aglobal[t+1];
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                    Plowx = 2*(vm[i*df + t + 2 * tt] + vm[i*df + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
+                    Plowx = 2*(vm[i*tInc + t + 2 * tt] + vm[i*tInc + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
                     if (Plowx < P1) {
                         if (not Px) {
                             Px = true;
@@ -528,7 +528,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
                 if (!Px) {//P1 was the lowest value
                     P1 = Plowx;
                     for (int tt=TauFilt1-2; tt>0; tt--) {
-                        Plowx = 2*(vm[i*df + t + 2 * tt] + vm[i*df + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
+                        Plowx = 2*(vm[i*tInc + t + 2 * tt] + vm[i*tInc + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
                         if (Plowx < P1) {
                             P1 = Plowx;
                         }
@@ -614,9 +614,9 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
                 //want something that works in most cases
                 Px = false;
                 //assume that I already have the right value
-                P1 = 2*(vm[i*df + t] + vm[i*df + t - 1])-Aglobal[t]-Aglobal[t-1];
+                P1 = 2*(vm[i*tInc + t] + vm[i*tInc + t - 1])-Aglobal[t]-Aglobal[t-1];
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
-                    Plowx = 2*(vm[i*df + t - 2 * tt] + vm[i*df + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
+                    Plowx = 2*(vm[i*tInc + t - 2 * tt] + vm[i*tInc + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
                     if (Plowx < P1) {
                         if (not Px) {
                             Px = true;
@@ -630,7 +630,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //
                 if (not Px) {//P1 was the lowest value
                     P1 = Plowx;
                     for (int tt=TauFilt1-2; tt>0; tt--) {
-                        Plowx = 2*(vm[i*df + t - 2 * tt] + vm[i*df + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
+                        Plowx = 2*(vm[i*tInc + t - 2 * tt] + vm[i*tInc + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
                         if (Plowx < P1) {
                             P1 = Plowx;
                         }
@@ -705,9 +705,9 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
             tA = t / dfAbs;
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*df + t]) % 4095 + (vm[i*df + t + df]) % 4095;
+                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
-            std::sort(&Slice[0], &Slice[NChannels+1]);
+            std::sort(Slice, Slice + NChannels);
             Aglobal [tA] = Slice [NChannels / 2];
         }
         for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
@@ -737,13 +737,13 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         for (int t=tx; dfSign*t<dfSign*ti; t+=df) {
             tA = t / dfAbs;
             for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
-                vSmth [i] = vm[i*df + t];
+                vSmth [i] = vm[i*tInc + t];
                 for (int ii=1; ii<tSmth; ii++) {
-                    vSmth [i] += vm[i*df + t + ii * df];
+                    vSmth [i] += vm[i*tInc + t + ii * df];
                 }
                 vSmth [i] *= AscaleV;
                 //CHANNEL OUT OF LINEAR REGIME
-                if (((vm[i*df + t + 2*df] + 4) % 4096) < 10) {
+                if (((vm[i*tInc + t + 2*df] + 4) % 4096) < 10) {
                     if (A [i] < artT) {//reset only when it starts leaving the linear regime
                         A [i] = artT;
                     }
@@ -775,9 +775,9 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice[i]=(vm[i*df + t])%4095+(vm[i*df + t+df])%4095;
+            Slice[i]=(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095;
         }
-        std::sort(&Slice[0], &Slice[NChannels+1]);
+        std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
         Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
         AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
@@ -789,9 +789,9 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm[i*df + ti - df];
+        vSmth [i] = vm[i*tInc + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm[i*df + ti + ii * df];
+            vSmth [i] += vm[i*tInc + ti + ii * df];
         }
         vSmth [i] *= AscaleV;
     }
@@ -803,13 +803,13 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
             AvgVoltageDefault (vm, t0, t+TauFiltOffset);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm[i*df + t+ tSmth1 * df]-vm[i*df + t - df]) *AscaleV;
+            vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         // SPIKE DETECTION
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm[i*df + t + df] + 4) % 4096) < 10) {
+            if (((vm[i*tInc + t + df] + 4) % 4096) < 10) {
                 if (A [i] < artT) {//reset only when it starts leaving the linear regime
                     A [i] = artT;
                 }
@@ -818,7 +818,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
             else if (A [i] == 0) {
                 QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
-                //vm[i*df + t-df]+vm[i*df + t]+vm[i*df + t+df]
+                //vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
                 Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
                 if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
                     if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
@@ -827,7 +827,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
                         FVbias [i]--;
                     }//Qdiff negative-->Ascale!!!;
                 }
-                //Qdiff [i][dt] = (vm[i*df + t - df] + vm[i*df + t] + vm[i*df + t + df] - Aglobal[tA]) * Ascale - Qm [i];//difference between ADC counts and Qm
+                //Qdiff [i][dt] = (vm[i*tInc + t - df] + vm[i*tInc + t] + vm[i*tInc + t + df] - Aglobal[tA]) * Ascale - Qm [i];//difference between ADC counts and Qm
                 //UPDATE Qm and Qd
                 if (Qdiff [i][dt] > 0) {
                     if (Qdiff [i][dt] > Qd [i]) {
@@ -891,8 +891,8 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     wInfo << "# Sampling rate:\n" << sfd/dfAbs  << "\n";
     wInfo << "# Threshold scaling:\n" << AmpScale << "\n";
     wInfo << "# Amplitude scaling:\n" << Ascale << "\n";
-    wInfo << "# Detection threshold*\n" << AmpScale << "\n" << threshold << "\n";
-    wInfo << "# Repolarization threshold*\n" << AmpScale << "\n" << AHPthr << "\n";
+    wInfo << "# Detection threshold*" << AmpScale << "\n" << threshold << "\n";
+    wInfo << "# Repolarization threshold*" << AmpScale << "\n" << AHPthr << "\n";
     wInfo << "# Recalibration trigger:\n" << recalibTrigger << "\n";
     wInfo << "# Cutouts:\n" << CutPre << " " << CutPost << " " << tCut << " " << tCutLong << " " << df << "\n";
     wInfo << "# Smoothing window (detection):\n" << tSmth << "\n";
@@ -928,9 +928,9 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice [i] = (vm[i*df + t]) % 4095 + (vm[i*df + t+df]) % 4095;
+            Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t+df]) % 4095;
         }
-        std::sort(&Slice[0], &Slice[NChannels+1]);
+        std::sort(Slice, Slice + NChannels);
         Aglobal[tA] = Slice [NChannels / 2];
     }
     for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
@@ -970,15 +970,15 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
         //now have to change voltage
         //can use Qm?
         for (int i=1; i<NChannels; i++) {//loop across channels
-            vSmth [i] = vm[i*df + t];
+            vSmth [i] = vm[i*tInc + t];
             for (int ii=1; ii<tSmth; ii++) {
-                vSmth [i] += vm[i*df + t + ii * df];
+                vSmth [i] += vm[i*tInc + t + ii * df];
             }
             vSmth [i] *= AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
-            //QmPre[i]=(vm[i*df + t]+vm[i*df + t+df]+vm[i*df + t+2*df]-Aglobal[tA])*Ascale;
+            //QmPre[i]=(vm[i*tInc + t]+vm[i*tInc + t+df]+vm[i*tInc + t+2*df]-Aglobal[tA])*Ascale;
         //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*df + t])%4095+(vm[i*df + t+df])%4095+(vm[i*df + t+2*df])%4095);
+        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
         }
 
         //Array.Sort(Slice);
@@ -987,7 +987,7 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
         wMean << Aglobal[tA] << "\n";
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm[i*df + t+2*df]+4)%4096)<10) {
+            if (((vm[i*tInc + t+2*df]+4)%4096)<10) {
                 if (A[i]<artT) {//reset only when it starts leaving the linear regime
                     A[i]=artT;
                     QmPreD[i] = 0;
@@ -995,7 +995,7 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
             }
             else {
                 QmPreD[i]  += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre [i]+QmPreD [i])/3;//update Qm vm[i*df + t]+vm[i*df + t+df]+vm[i*df + t+2*df]
+                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre [i]+QmPreD [i])/3;//update Qm vm[i*tInc + t]+vm[i*tInc + t+df]+vm[i*tInc + t+2*df]
             }
         }
     }
@@ -1048,9 +1048,9 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice[i]=(vm[i*df + t])%4095+(vm[i*df + t+df])%4095;
+            Slice[i]=(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095;
         }
-        std::sort(&Slice[0], &Slice[NChannels+1]);
+        std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
         Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
         AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
@@ -1062,9 +1062,9 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm[i*df + ti - df];
+        vSmth [i] = vm[i*tInc + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm[i*df + ti + ii * df];
+            vSmth [i] += vm[i*tInc + ti + ii * df];
         }
         vSmth [i] *= AscaleV;
     }
@@ -1081,20 +1081,20 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
             AvgVoltageDefault (vm, t0, t+TauFiltOffset);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm[i*df + t+ tSmth1 * df]-vm[i*df + t - df]) *AscaleV;
+            vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         ////for (int i=1; i<NChannels; i++) {//loop across channels
-        ////	QmPre[i]=(vm[i*df + t]+vm[i*df + t-df]+vm[i*df + t+df]-Aglobal[tA])*Ascale;
+        ////	QmPre[i]=(vm[i*tInc + t]+vm[i*tInc + t-df]+vm[i*tInc + t+df]-Aglobal[tA])*Ascale;
         ////}
         //for (int i=1; i<NChannels; i++) {//loop across channels
-        //	QmPre[i]=((vm[i*df + t-df])%4095+(vm[i*df + t])%4095+(vm[i*df + t+df])%4095)*Ascale;
+        //	QmPre[i]=((vm[i*tInc + t-df])%4095+(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095)*Ascale;
         //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
         //	//if (i == 2120) {
         //	//	Console.WriteLine (QmPreD [i]);
         //	//}
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*df + t])%4095+(vm[i*df + t+df])%4095+(vm[i*df + t+2*df])%4095);
-        //	//Slice[i]=((vm[i*df + t-df])%4095+(vm[i*df + t])%4095+(vm[i*df + t+df])%4095);
+        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
+        //	//Slice[i]=((vm[i*tInc + t-df])%4095+(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095);
         //}
         //Array.Sort(Slice);
         //if (ACF) {
@@ -1106,7 +1106,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
         wMean << Aglobal[tA] << "\n";
         // RECALIBRATION EVENTS
         if (recalibTrigger==0){
-            if (vm[0*NChannels + t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
+            if (vm[t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
                 if (Acal > 2000) {
                     wInfo << (t+t0)/dfAbs;//write time of recalibration event
                     for (int i=0; i<NChannels; i++) {//loop across channels
@@ -1157,12 +1157,12 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
         // SPIKE DETECTION
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
-            if (((vm[i*df + t+df]+4)%4096)<10) {
+            if (((vm[i*tInc + t+df]+4)%4096)<10) {
                 if (A[i]<artT) {//reset only when it starts leaving the linear regime
                     /*
                     if (ACF) {
                         for (int ii=0; ii<Math.Min(artT-A[i],6); ii++) {//is only for one step in the past...ignoring others
-                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm[i*df + t + (6 - ii) * df] - vm[i*df + t + (3 - ii) * df]) / Ascale;
+                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm[i*tInc + t + (6 - ii) * df] - vm[i*tInc + t + (3 - ii) * df]) / Ascale;
                         }
                     }
                     */
@@ -1177,15 +1177,15 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                 QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
                 /*
                 if (ACF) {
-                    SqIv [i] += (vm[i*df + t + df] - vm[i*df + t - 2 * df]) * (vm[i*df + t + df] - vm[i*df + t - 2 * df]);
+                    SqIv [i] += (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]) * (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]);
                     for (int iii=-6; iii<7; iii++) {
-                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm[i*df + t + (1 + iii) * df] - vm[i*df + t - (2 - iii) * df]) / Ascale;
+                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm[i*tInc + t + (1 + iii) * df] - vm[i*tInc + t - (2 - iii) * df]) / Ascale;
                         //t-8...t+7
                     }
                 }
                 */
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
-                //vm[i*df + t-df]+vm[i*df + t]+vm[i*df + t+df]
+                //vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
                 Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
                 if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
                     if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
@@ -1217,7 +1217,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
             }
             //AFTER CHANNEL WAS OUT OF LINEAR REGIME
             else {
-                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i*df + t-df]+vm[i*df + t]+vm[i*df + t+df]
+                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
                 if (A [i] == artT) {
                     QmPreD[i] = 0;
                 }
@@ -1313,7 +1313,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd4a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1322,7 +1322,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
-                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                            std::sort(tQmA, tQmA + tQmf);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1344,7 +1344,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             int ch = ChInd4b[i][subChIndex];
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1353,7 +1353,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
-                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                                std::sort(tQmA, tQmA + tQmf);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1389,7 +1389,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd4a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1398,7 +1398,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
-                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                            std::sort(tQmA, tQmA + tQmf);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1420,7 +1420,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             int ch = ChInd4b[i][subChIndex];
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1429,7 +1429,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
-                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                                std::sort(tQmA, tQmA + tQmf);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1626,7 +1626,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
                         NSpikes5++;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
                         //compute baseline
                         for (int kk=0; kk<tQm0; kk++){
@@ -1635,7 +1635,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int kk=tQm0; kk<tQmf; kk++){
                             tQmA[kk]=tShape[tQmX[kk]];
                         }
-                        std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                        std::sort(tQmA, tQmA + tQmf);
                         b = tQmA [tQmm]+tQmA [tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
@@ -1655,7 +1655,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd5a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1664,7 +1664,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
-                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                            std::sort(tQmA, tQmA + tQmf);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1686,7 +1686,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             int ch = ChInd5b[i][subChIndex];
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1695,7 +1695,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
-                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                                std::sort(tQmA, tQmA + tQmf);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1729,7 +1729,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
                         NSpikes5++;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
+                            tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
                         //compute baseline
                         for (int kk=0; kk<tQm0; kk++){
@@ -1738,7 +1738,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int kk=tQm0; kk<tQmf; kk++){
                             tQmA[kk]=tShape[tQmXLong[kk]];
                         }
-                        std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                        std::sort(tQmA, tQmA + tQmf);
                         b = tQmA [tQmm]+tQmA [tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
@@ -1758,7 +1758,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd5a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                             }
                             //compute baseline
                             for (int kk=0; kk<tQm0; kk++){
@@ -1767,7 +1767,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             for (int kk=tQm0; kk<tQmf; kk++){
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
-                            std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                            std::sort(tQmA, tQmA + tQmf);
                             b = tQmA [tQmm]+tQmA [tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
@@ -1789,7 +1789,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                             int ch = ChInd5b[i][subChIndex];
                             if (ch>-1){
                                 for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
-                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*df + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
+                                    tShape[jj+CutOffset-t/dfAbs] = vm[ch*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ch]*Aglobaldiff[jj]/Sampling;
                                 }
                                 //compute baseline
                                 for (int kk=0; kk<tQm0; kk++){
@@ -1798,7 +1798,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
                                 for (int kk=tQm0; kk<tQmf; kk++){
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
-                                std::sort(&tQmA[0], &tQmA[tQmf+1]);
+                                std::sort(tQmA, tQmA + tQmf);
                                 b = tQmA [tQmm]+tQmA [tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
@@ -1934,21 +1934,27 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
     }
 }
 
+void InterpDetection::outNum(int i) {
+    wMean << "OUTPUT: "<< i << std::endl; 
+
+}
+
 void InterpDetection::FinishDetection(unsigned short* vm, int skipLast) {
+    wMean << "FINISH DETECTION:" << std::endl; 
     if (df > 0) {
         for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*df + t]) % 4095 + (vm[i*df + t + df]) % 4095;
+                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
-            std::sort(&Slice[0], &Slice[NChannels+1]);
+            std::sort(Slice, Slice + NChannels);
             wMean << Slice [NChannels / 2] << "\n";
         }
     } else {
         for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*df + t]) % 4095 + (vm[i*df + t + df]) % 4095;
+                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
-            std::sort(&Slice[0], &Slice[NChannels+1]);
+            std::sort(Slice, Slice + NChannels);
             wMean << Slice [NChannels / 2] << "\n";
         }
     }

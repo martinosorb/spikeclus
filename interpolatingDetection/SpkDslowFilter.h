@@ -171,5 +171,6 @@ public:
 	void skipLastReverse(int skipLast);
 	void Iterate(unsigned short* vm, long t0);
 	void FinishDetection(unsigned short* vm, int skipLast);
+	void outNum(int i);
 };
 };
