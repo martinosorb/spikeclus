@@ -201,7 +201,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     int increment = 1;
     float cutoutPrePeak = 2*sfi*FrameDt; // 1.14
     float cutoutPostPeak = 3*sfi*FrameDt; // 1.71
-    float smoothing_kernel = (sf/5000+2)*FrameDt; // 0.43
+    float smoothing_kernel = (sf/5000.0+2.0)*FrameDt; // 0.43
     bool measure_autocorrelation = false;
     
     // Set the parameters
@@ -380,7 +380,7 @@ void InterpDetection::openFiles(const std::string& name) {
     wMean.open(name + "_INT_Avg.txt"); // For avg. Voltage
 }
        
-void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t) { //want to compute an approximate 33 percentile
+void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int tInc) { //want to compute an approximate 33 percentile
     //can average over 2 consecutive frames
     //each time called, I should take the next 4 frames of vm (all channels)
     //would need to correct for Aglobal
@@ -708,16 +708,16 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
                 Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            Aglobal [tA] = Slice [NChannels / 2];
+            Aglobal[tA] = Slice [NChannels / 2];
         }
         for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
-            Aglobaldiff [t] = Aglobal [t] - Aglobal [t - dfSign];
+            Aglobaldiff [t] = Aglobal[t] - Aglobal[t - dfSign];
         }
         for (int t=tx/dfAbs; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
             //tA = t / dfAbs;
-            AglobalSmth [t] = Aglobal [t];
+            AglobalSmth [t] = Aglobal[t];
             for (int ii=1; ii<tSmth1; ii++) {
-                AglobalSmth [t] += Aglobal [t + ii*dfSign];
+                AglobalSmth [t] += Aglobal[t + ii*dfSign];
             }
             AglobalSmth [t] *= AscaleG;
         }
@@ -727,11 +727,11 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         //initialize slow filter
         if (HF) {
             for (int t=tx; dfSign*t<dfSign*tx+NFblocks*4*TauFilt1*2; t+=2*TauFilt1*dfSign) {
-                AvgVoltageDefault (vm, t0, t);//-4+4*dfSign
+                AvgVoltageDefault (vm, t0, t, tInc);//-4+4*dfSign
             }
         } else {
             for (int t=tx; dfSign*t<dfSign*tx+(NFblocks+1)*4*TauFilt1; t+=2*TauFilt1*dfSign) {
-                AvgVoltageDefault (vm, t0, t);
+                AvgVoltageDefault (vm, t0, t, tInc);
             }
         } 
         for (int t=tx; dfSign*t<dfSign*ti; t+=df) {
@@ -754,7 +754,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         }
         //shift Aglobal entries
         for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
-            Aglobal [t + tfiA] = Aglobal [t];
+            Aglobal[t + tfiA] = Aglobal[t];
             Aglobaldiff [t + tfiA] = Aglobaldiff [t];
         }
         for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
@@ -764,7 +764,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
     }
     //shift Aglobal entries
     for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
-        Aglobal [t] = Aglobal [t + tfiA];
+        Aglobal[t] = Aglobal[t + tfiA];
         Aglobaldiff [t] = Aglobaldiff [t + tfiA];
     }
     for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
@@ -779,10 +779,10 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         }
         std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
-        Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
-        AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
+        Aglobaldiff [tA] = Aglobal[tA] - Aglobal[tA - dfSign];
+        AglobalSmth [tA+tdSmth1] = Aglobal[tA+tdSmth1];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [tA+tdSmth1] += Aglobal [tA+tdSmth1 + ii*dfSign];
+            AglobalSmth [tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
         }
         AglobalSmth [tA+tdSmth1] *= AscaleG;
         AglobalSdiff[tA+tdSmth1]=AglobalSmth[tA+tdSmth1]-AglobalSmth[t+tdSmth];
@@ -800,7 +800,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         tA = t / dfAbs;
         if ((t0+t)%(2*TauFilt1)==0) {
             //update Avgs3
-            AvgVoltageDefault (vm, t0, t+TauFiltOffset);
+            AvgVoltageDefault (vm, t0, t+TauFiltOffset, tInc);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
             vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
@@ -934,13 +934,13 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
         Aglobal[tA] = Slice [NChannels / 2];
     }
     for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
-        Aglobaldiff [t] = Aglobal [t] - Aglobal [t - dfSign];
+        Aglobaldiff [t] = Aglobal[t] - Aglobal[t - dfSign];
     }
     for (int t=tx/dfAbs; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
         //tA = t / dfAbs;
-        AglobalSmth [t] = Aglobal [t];
+        AglobalSmth [t] = Aglobal[t];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [t] += Aglobal [t + ii*dfSign];
+            AglobalSmth [t] += Aglobal[t + ii*dfSign];
         }
         AglobalSmth [t] *= AscaleG;
     }
@@ -950,11 +950,11 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     //initialize slow filter
     if (HF) {
         for (int t=tx; dfSign*t<dfSign*tx+NFblocks*4*TauFilt1*2; t+=2*TauFilt1*dfSign) {
-            AvgVoltageDefault (vm, t0, t);//-4+4*dfSign
+            AvgVoltageDefault (vm, t0, t, tInc);//-4+4*dfSign
         }
     } else {
         for (int t=tx; dfSign*t<dfSign*tx+(NFblocks+1)*4*TauFilt1; t+=2*TauFilt1*dfSign) {
-            AvgVoltageDefault (vm, t0, t);
+            AvgVoltageDefault (vm, t0, t, tInc);
         }
     }
     for (int t=tx; dfSign*t<dfSign*ti; t+=df) {
@@ -965,7 +965,7 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
         dtEx = dtE;
         dtE = (dtE + 1) % dtEMx;
         if ((t0 + t) % (2 * TauFilt1) == 0) {
-            AvgVoltageDefault (vm, t0, t + TauFiltOffset);
+            AvgVoltageDefault (vm, t0, t + TauFiltOffset, tInc);
         }
         //now have to change voltage
         //can use Qm?
@@ -1001,7 +1001,7 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     }
     //shift Aglobal entries
     for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
-        Aglobal [t + tfiA] = Aglobal [t];
+        Aglobal[t + tfiA] = Aglobal[t];
         Aglobaldiff [t + tfiA] = Aglobaldiff [t];
     }
     for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
@@ -1025,7 +1025,7 @@ void InterpDetection::skipLastReverse(int skipLast) {
     }
 }
 
-void InterpDetection::Iterate(unsigned short* vm, long t0) {
+void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
     //int qq;
     int a4;//to buffer the difference between ADC counts and Qm
     int a5;//to buffer the difference between ADC counts and Qm
@@ -1037,7 +1037,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
     int tA;
     //shift Aglobal entries
     for (int t=tx/ dfAbs; dfSign*t<tm/df; t+=dfSign) {
-        Aglobal [t] = Aglobal [t + tfiA];
+        Aglobal[t] = Aglobal[t + tfiA];
         Aglobaldiff [t] = Aglobaldiff [t + tfiA];
     }
     for (int t=tx/ dfAbs; dfSign*t<tms/df; t+=dfSign) {
@@ -1052,10 +1052,10 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
         }
         std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
-        Aglobaldiff [tA] = Aglobal [tA] - Aglobal [tA - dfSign];
-        AglobalSmth [tA+tdSmth1] = Aglobal [tA+tdSmth1];
+        Aglobaldiff [tA] = Aglobal[tA] - Aglobal[tA - dfSign];
+        AglobalSmth [tA+tdSmth1] = Aglobal[tA+tdSmth1];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [tA+tdSmth1] += Aglobal [tA+tdSmth1 + ii*dfSign];
+            AglobalSmth [tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
         }
         AglobalSmth [tA+tdSmth1] *= AscaleG;
         AglobalSdiff[tA+tdSmth1]=AglobalSmth[tA+tdSmth1]-AglobalSmth[t+tdSmth];
@@ -1078,7 +1078,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
         tA = t / dfAbs;
         if ((t0+t)%(2*TauFilt1)==0) {
             //update Avgs3
-            AvgVoltageDefault (vm, t0, t+TauFiltOffset);
+            AvgVoltageDefault (vm, t0, t+TauFiltOffset, tInc);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
             vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
@@ -1934,20 +1934,14 @@ void InterpDetection::Iterate(unsigned short* vm, long t0) {
     }
 }
 
-void InterpDetection::outNum(int i) {
-    wMean << "OUTPUT: "<< i << std::endl; 
+void InterpDetection::FinishDetection(unsigned short* vm, int skipLast, int tInc) { 
 
-}
-
-void InterpDetection::FinishDetection(unsigned short* vm, int skipLast) {
-    wMean << "FINISH DETECTION:" << std::endl; 
     if (df > 0) {
-        for (int t=tf; t<df*(tInc-1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
+        for (int t=tf; t<df*(192 - 1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
                 Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            wMean << Slice [NChannels / 2] << "\n";
         }
     } else {
         for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
@@ -1955,7 +1949,7 @@ void InterpDetection::FinishDetection(unsigned short* vm, int skipLast) {
                 Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            wMean << Slice [NChannels / 2] << "\n";
+            wMean << "r" << t << Slice [NChannels / 2] << "\n";
         }
     }
     wMean << Slice [NChannels / 2] << "\n";
