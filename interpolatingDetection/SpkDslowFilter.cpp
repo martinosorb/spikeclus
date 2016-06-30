@@ -1942,6 +1942,7 @@ void InterpDetection::FinishDetection(unsigned short* vm, int skipLast, int tInc
                 Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
+            wMean << t << Slice [NChannels / 2] << "\n";
         }
     } else {
         for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
@@ -1949,7 +1950,7 @@ void InterpDetection::FinishDetection(unsigned short* vm, int skipLast, int tInc
                 Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            wMean << "r" << t << Slice [NChannels / 2] << "\n";
+            wMean << t << Slice [NChannels / 2] << "\n";
         }
     }
     wMean << Slice [NChannels / 2] << "\n";
