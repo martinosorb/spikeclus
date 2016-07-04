@@ -60,84 +60,84 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
         SInd[Indices[i]] = i;
         SInd4[Indices[i]] += 1;
         SInd5[Indices[i]] += 1;
-        if ((Indices [i] % 64) >0) {//channel to the left
-            SInd4 [Indices [i] - 1] += 1;
-            SInd5 [Indices [i] - 1] += 1;
-            if ((Indices [i] / 64) >0) {//up and left
-                SInd4 [Indices [i] - 65] += 1;
+        if ((Indices[i] % 64) >0) {//channel to the left
+            SInd4[Indices[i] - 1] += 1;
+            SInd5[Indices[i] - 1] += 1;
+            if ((Indices[i] / 64) >0) {//up and left
+                SInd4[Indices[i] - 65] += 1;
             }
         }
-        if ((Indices [i] % 64) <63) {//right
-            SInd5 [Indices [i] + 1] += 1;
+        if ((Indices[i] % 64) <63) {//right
+            SInd5[Indices[i] + 1] += 1;
         }
-        if ((Indices [i] / 64) >0) {//up
-            SInd4 [Indices [i] - 64] += 1;
-            SInd5 [Indices [i] - 64] += 1;
+        if ((Indices[i] / 64) >0) {//up
+            SInd4[Indices[i] - 64] += 1;
+            SInd5[Indices[i] - 64] += 1;
         }
-        if ((Indices [i] / 64) <63) {//down
-            SInd5 [Indices [i] + 64] += 1;
+        if ((Indices[i] / 64) <63) {//down
+            SInd5[Indices[i] + 64] += 1;
         }
     }//channels with (all) neighbors have SInd4=4 or SInd5=5
     int ChInd4aN = 0; // (changed: global variable)
     int ChInd5N = 0; // (changed: global variable)
     for (int i=0; i<4096; i++) {
-        if (SInd4 [i] == 4) {
-            ChInd4a [SInd [i]][0] = SInd [i];
+        if (SInd4[i] == 4) {
+            ChInd4a[SInd[i]][0] = SInd[i];
             ChInd4aN++;
-            ChInd4a [SInd [i]][1] = SInd [i + 1];
-            ChInd4a [SInd [i]][2] = SInd [i + 65];
-            ChInd4a [SInd [i]][3] = SInd [i + 64];
-            if (SInd5 [i] == 5) {
-                ChInd4c [SInd [i]][0] = SInd [i];
+            ChInd4a[SInd[i]][1] = SInd[i + 1];
+            ChInd4a[SInd[i]][2] = SInd[i + 65];
+            ChInd4a[SInd[i]][3] = SInd[i + 64];
+            if (SInd5[i] == 5) {
+                ChInd4c[SInd[i]][0] = SInd[i];
             }
-            if (SInd5 [(i + 1)%4096] == 5) {
-                ChInd4c [SInd [i]][1] = SInd [(i + 1) % 4096];
+            if (SInd5[(i + 1)%4096] == 5) {
+                ChInd4c[SInd[i]][1] = SInd[(i + 1) % 4096];
             }
-            if (SInd5 [(i + 64) % 4096] == 5) {
-                ChInd4c [SInd [i]][3] = SInd [(i +64) % 4096];
+            if (SInd5[(i + 64) % 4096] == 5) {
+                ChInd4c[SInd[i]][3] = SInd[(i +64) % 4096];
             }
-            if (SInd5 [(i + 65) % 4096] == 5) {
-                ChInd4c [SInd [i]][2] = SInd [(i + 65) % 4096];
+            if (SInd5[(i + 65) % 4096] == 5) {
+                ChInd4c[SInd[i]][2] = SInd[(i + 65) % 4096];
             }
-            if (SInd4 [(i + 4032) % 4096] == 4) {
-                ChInd4b [SInd [i]][0] = SInd [(i + 4032) % 4096];
-                ChInd4b [SInd [i]][1] = SInd [(i + 4033) % 4096];
+            if (SInd4[(i + 4032) % 4096] == 4) {
+                ChInd4b[SInd[i]][0] = SInd[(i + 4032) % 4096];
+                ChInd4b[SInd[i]][1] = SInd[(i + 4033) % 4096];
             }
-            if (SInd4 [(i + 1) % 4096] == 4) {
-                ChInd4b [SInd [i]][2] = SInd [(i + 2) % 4096];
-                ChInd4b [SInd [i]][3] = SInd [(i + 66) % 4096];
+            if (SInd4[(i + 1) % 4096] == 4) {
+                ChInd4b[SInd[i]][2] = SInd[(i + 2) % 4096];
+                ChInd4b[SInd[i]][3] = SInd[(i + 66) % 4096];
             }
-            if (SInd4 [(i + 64) % 4096] == 4) {
-                ChInd4b [SInd [i]][4] = SInd [(i + 129) % 4096];
-                ChInd4b [SInd [i]][5] = SInd [(i + 128) % 4096];
+            if (SInd4[(i + 64) % 4096] == 4) {
+                ChInd4b[SInd[i]][4] = SInd[(i + 129) % 4096];
+                ChInd4b[SInd[i]][5] = SInd[(i + 128) % 4096];
             }
-            if (SInd4 [(i + 4095) % 4096] == 4) {
-                ChInd4b [SInd [i]][6] = SInd [(i + 63) % 4096];
-                ChInd4b [SInd [i]][7] = SInd [(i + 4095) % 4096];
+            if (SInd4[(i + 4095) % 4096] == 4) {
+                ChInd4b[SInd[i]][6] = SInd[(i + 63) % 4096];
+                ChInd4b[SInd[i]][7] = SInd[(i + 4095) % 4096];
             }
         }
-        if (SInd5 [i] == 5) {
-            ChInd5 [SInd [i]] = SInd [i];
+        if (SInd5[i] == 5) {
+            ChInd5[SInd[i]] = SInd[i];
             ChInd5N++;
-            ChInd5a [SInd [i]][0] = SInd [i - 64];
-            ChInd5a [SInd [i]][1] = SInd [i + 1];
-            ChInd5a [SInd [i]][2] = SInd [i + 64];
-            ChInd5a [SInd [i]][3] = SInd [i - 1];
-            if (SInd4 [i] == 4) {
-                ChInd5c [SInd [i]][2] = SInd [i];
-                ChInd5b [SInd [i]][2] = SInd [(i + 65) % 4096];
+            ChInd5a[SInd[i]][0] = SInd[i - 64];
+            ChInd5a[SInd[i]][1] = SInd[i + 1];
+            ChInd5a[SInd[i]][2] = SInd[i + 64];
+            ChInd5a[SInd[i]][3] = SInd[i - 1];
+            if (SInd4[i] == 4) {
+                ChInd5c[SInd[i]][2] = SInd[i];
+                ChInd5b[SInd[i]][2] = SInd[(i + 65) % 4096];
             }
-            if (SInd4 [(i + 4095)%4096] == 4) {
-                ChInd5c [SInd [i]][3] = SInd [(i + 4095) % 4096];
-                ChInd5b [SInd [i]][3] = SInd [(i + 63) % 4096];
+            if (SInd4[(i + 4095)%4096] == 4) {
+                ChInd5c[SInd[i]][3] = SInd[(i + 4095) % 4096];
+                ChInd5b[SInd[i]][3] = SInd[(i + 63) % 4096];
             }
-            if (SInd4 [(i + 4032) % 4096] == 4) {
-                ChInd5c [SInd [i]][1] = SInd [(i + 4032) % 4096];
-                ChInd5b [SInd [i]][1] = SInd [(i + 4033) % 4096];
+            if (SInd4[(i + 4032) % 4096] == 4) {
+                ChInd5c[SInd[i]][1] = SInd[(i + 4032) % 4096];
+                ChInd5b[SInd[i]][1] = SInd[(i + 4033) % 4096];
             }
-            if (SInd4 [(i + 4031)%4096] == 4) {
-                ChInd5c [SInd [i]][0] = SInd [(i + 4031)%4096];
-                ChInd5b [SInd [i]][0] = SInd [(i + 4031)%4096];
+            if (SInd4[(i + 4031)%4096] == 4) {
+                ChInd5c[SInd[i]][0] = SInd[(i + 4031)%4096];
+                ChInd5b[SInd[i]][0] = SInd[(i + 4031)%4096];
             }
         }
     }
@@ -148,8 +148,8 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     ChInd4List= new int[ChInd4ListSize];
     int iiii = 0;
     for (int i=0; i<NCh; i++) {
-        if (ChInd4a [i] [0] != -1) {
-            ChInd4List [iiii] = ChInd4a [i] [0];
+        if (ChInd4a[i][0] != -1) {
+            ChInd4List[iiii] = ChInd4a[i][0];
             iiii++;
         }
     }
@@ -157,8 +157,8 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     ChInd5List= new int[ChInd5ListSize];
     iiii = 0;
     for (int i=0; i<NCh; i++) {
-        if (ChInd5 [i] != -1) {
-            ChInd5List [iiii] = ChInd5 [i];
+        if (ChInd5[i] != -1) {
+            ChInd5List[iiii] = ChInd5[i];
             iiii++;
         }
     }
@@ -251,7 +251,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
         tfiA = (tf - ti) / dfAbs;
         ty=df*(tInc-1);
         t0x = 0;
-        dfTI [1] = tf-ti;
+        dfTI[1] = tf-ti;
     }
     else {
         dfAbs = -df;
@@ -276,7 +276,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
         tfiA = (tf - ti) / dfAbs;
         ty=0;
         t0x = nFrames + df*tInc;
-        dfTI [1] = ti-tf;//positive
+        dfTI[1] = ti-tf;//positive
     }
     TauFiltOffset *= dfSign;
     Subsample = (dfAbs > 1);
@@ -289,16 +289,16 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     tQmX= new int[tQmf];
     tQmXLong= new int[tQmf];
     for (int i=tQm0; i<tQmi; i++) {
-        tQm [i] = -CutOffset + i-tQm0;//-8:-4
-        tQmLong [i] = -CutOffset + i-tQm0;
-        tQmX [i] = i-tQm0;//-8:-4
-        tQmXLong [i] = i-tQm0;
+        tQm[i] = -CutOffset + i-tQm0;//-8:-4
+        tQmLong[i] = -CutOffset + i-tQm0;
+        tQmX[i] = i-tQm0;//-8:-4
+        tQmXLong[i] = i-tQm0;
     }
     for (int i=tQmi; i<tQmf; i++) {
-        tQm [i] = -CutOffset+tCut-tQmf+ i;//4:12
-        tQmLong [i] = -CutOffset+tCutLong-tQmf + i;
-        tQmX [i] = tCut +i-tQmf;//-8:-4
-        tQmXLong [i] = tCutLong+i-tQmf;
+        tQm[i] = -CutOffset+tCut-tQmf+ i;//4:12
+        tQmLong[i] = -CutOffset+tCutLong-tQmf + i;
+        tQmX[i] = tCut +i-tQmf;//-8:-4
+        tQmXLong[i] = tCutLong+i-tQmf;
     }
     tQmm = (tQmf) / 2;
     tQmA= new int[tQmf];
@@ -310,21 +310,21 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     //LiX = - CutPre / 3 - Lspike / 2;//-4:4 how likely Overlap?
     //LfX = CutPre / 3 - Lspike / 2 +1;
     Lw=new int[Lspike];
-    Lw [0] = 1;
-    Lw [Lspike - 1] = 1;
+    Lw[0] = 1;
+    Lw[Lspike - 1] = 1;
     for (int i =1; i<Lspike-1; i++) {
-        Lw [i] = 2;
+        Lw[i] = 2;
     }
     Lmx= 0;
     tShape= new int[tCutLong];
-    dfTI [0] = df;
-    dfTI [2] = tInc*dfAbs;//positive
+    dfTI[0] = df;
+    dfTI[2] = tInc*dfAbs;//positive
     Ascale = (Ascale0 / tSmth / tSmth1/2) *2* tSmth * tSmth1;
     AscaleV = Ascale / tSmth;
     AscaleG = Ascale / tSmth1/2;
     AglobalSmth=new int[tInc];
     for (int i=0; i<tInc; i++) {
-        AglobalSmth [i] = 2047*Ascale;
+        AglobalSmth[i] = 2047*Ascale;
     }
     vSmth=new int[NChannels];
     //TauF1 = 2 * TauFilt1 * dfAbs;
@@ -335,7 +335,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
         Qd[i]=600;
         Qm[i]=0;
         for (int ij=0; ij<dtMx; ij++) {
-            Qdiff [i][ij] = 0;
+            Qdiff[i][ij] = 0;
             Qmax[i][ij]=0;
         }
         QmaxE[i]=0;
@@ -345,13 +345,13 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
             SIprod[i][ii]=0;//sum of product of global and channel voltage increments
         }
         for (int iii=0; iii<3; iii++) {
-            Avgs1 [i][iii] = 4094;//sum of product of global and channel voltage increments
+            Avgs1[i][iii] = 4094;//sum of product of global and channel voltage increments
         }
         for (int iii=0; iii<NFblocks; iii++) {
-            Avgs2 [i][iii] = 4094;//sum of product of global and channel voltage increments
+            Avgs2[i][iii] = 4094;//sum of product of global and channel voltage increments
         }
-        QmPreD [i] = 0;
-        Avgs3 [i] = 2047*Ascale;
+        QmPreD[i] = 0;
+        Avgs3[i] = 2047*Ascale;
         FVbias[i]=0;
         Vbias[i]=0;
         FVsbias[i]=0;
@@ -441,17 +441,17 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
             //(advantage: less memory wastage and only need to compute median every fourth frame)
             //have one block of four values to estimate (make area to average shorter), take weighted average of first and last block
             if (kk < 2) {
-                Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                Avgs1 [i][kk] = 2*P1;
+                Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                Avgs1[i][kk] = 2*P1;
             } else if (HF & (kk<3)) {
-                Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                Avgs1 [i][kk] = 2*P1;
+                Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                Avgs1[i][kk] = 2*P1;
             } else {
                 //assume that I already have the right value
                 Px = false;
                 P2 = 2*P1;
                 for (int tt=0; tt<3; tt++) {//this function wastes most of the time
-                    Plowx = Avgs1 [i][tt];
+                    Plowx = Avgs1[i][tt];
                     if (Plowx < P2) {
                         if (not Px) {
                             Px = true;
@@ -465,26 +465,26 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 if (not Px) {//P1 was the lowest value
                     P2 = Plowx;
                     for (int tt=2; tt>=0; tt--) {
-                        Plowx = Avgs1 [i][tt];
+                        Plowx = Avgs1[i][tt];
                         if (Plowx < P2) {
                             P2 = Plowx;
                         }
                     }
                 }
-                Avgs2 [i][klast] = P2;
+                Avgs2[i][klast] = P2;
                 if (not HF) {
-                    Avgs1 [i][2] = 2*P1;
+                    Avgs1[i][2] = 2*P1;
                 }
                 //to avoid accumulating numerical errors (not sure whether necessary)
                 if (NFblocks == 3) {
-                    Avgs3 [i] = (P2 + 4 * (Avgs2 [i][knext] + Avgs2 [i][k])) * Ascale/ FiltNorm;
+                    Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale/ FiltNorm;
                 } else {
-                    Avgs3 [i] = -3*P2;
+                    Avgs3[i] = -3*P2;
                     for (int tt=0; tt<NFblocks; tt++) {
-                        Avgs3 [i] += 4 * Avgs2 [i][tt];
+                        Avgs3[i] += 4 * Avgs2[i][tt];
                     }
-                    Avgs3 [i] *= Ascale;
-                    Avgs3 [i] /=FiltNorm;
+                    Avgs3[i] *= Ascale;
+                    Avgs3[i] /=FiltNorm;
                 }
             }
         }
@@ -542,19 +542,19 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 //i.e. for intermediate values, just change the weighting
                 //(advantage: less memory wastage and only need to compute median every fourth frame)
                 //have one block of four values to estimate (make area to average shorter), take weighted average of first and last block
-                //Avgs1 [i][kk] = P1;
+                //Avgs1[i][kk] = P1;
                 if (kk < 2) {
-                    Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                    Avgs1 [i][kk] = P1;
+                    Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                    Avgs1[i][kk] = P1;
                 } else if (HF & (kk < 3)) {
-                    Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                    Avgs1 [i][kk] = P1;
+                    Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                    Avgs1[i][kk] = P1;
                 } else {
                     //assume that I already have the right value
                     P2 = P1;
                     Px = false;
                     for (int tt=0; tt<3; tt++) {//this function wastes most of the time
-                        Plowx = Avgs1 [i][tt];
+                        Plowx = Avgs1[i][tt];
                         if (Plowx < P2) {
                             if (not Px) {
                                 Px = true;
@@ -568,26 +568,26 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     if (not Px) {//P1 was the lowest value
                         P2 = Plowx;
                         for (int tt=1; tt>=0; tt--) {
-                            Plowx = Avgs1 [i][tt];
+                            Plowx = Avgs1[i][tt];
                             if (Plowx < P2) {
                                 P2 = Plowx;
                             }
                         }
                     }
-                    Avgs2 [i][klast] = P2;//klast will be knext after one iteration
+                    Avgs2[i][klast] = P2;//klast will be knext after one iteration
                     if (not HF) {
-                        Avgs1 [i][2] = P1;
+                        Avgs1[i][2] = P1;
                     }
                     //to avoid accumulating numerical errors (not sure whether necessary)
                     if (NFblocks == 3) {
-                        Avgs3 [i] = (P2 + 4 * (Avgs2 [i][knext] + Avgs2 [i][k])) * Ascale / FiltNorm;
+                        Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale / FiltNorm;
                     } else {
-                        Avgs3 [i] = -3 * P2;
+                        Avgs3[i] = -3 * P2;
                         for (int tt=0; tt<NFblocks; tt++) {
-                            Avgs3 [i] += 4 * Avgs2 [i][tt];
+                            Avgs3[i] += 4 * Avgs2[i][tt];
                         }
-                        Avgs3 [i] *= Ascale;
-                        Avgs3 [i] /= FiltNorm;
+                        Avgs3[i] *= Ascale;
+                        Avgs3[i] /= FiltNorm;
                     }
                 }
             }
@@ -644,19 +644,19 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 //i.e. for intermediate values, just change the weighting
                 //(advantage: less memory wastage and only need to compute median every fourth frame)
                 //have one block of four values to estimate (make area to average shorter), take weighted average of first and last block
-                //Avgs1 [i][kk] = P1;
+                //Avgs1[i][kk] = P1;
                 if (kk < 2) {
-                    Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                    Avgs1 [i][kk] = P1;
+                    Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                    Avgs1[i][kk] = P1;
                 } else if (HF & (kk < 3)) {
-                    Avgs3 [i] += (Avgs2 [i][knext] - Avgs2 [i][klast]) * Ascale / FiltNorm;
-                    Avgs1 [i][kk] = P1;
+                    Avgs3[i] += (Avgs2[i][knext] - Avgs2[i][klast]) * Ascale / FiltNorm;
+                    Avgs1[i][kk] = P1;
                 } else {
                     //assume that I already have the right value
                     P2 = P1;
                     Px = false;
                     for (int tt=0; tt<3; tt++) {//this function wastes most of the time
-                        Plowx = Avgs1 [i][tt];
+                        Plowx = Avgs1[i][tt];
                         if (Plowx < P2) {
                             if (not Px) {
                                 Px = true;
@@ -670,26 +670,26 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     if (not Px) {//P1 was the lowest value
                         P2 = Plowx;
                         for (int tt=1; tt>=0; tt--) {
-                            Plowx = Avgs1 [i][tt];
+                            Plowx = Avgs1[i][tt];
                             if (Plowx < P2) {
                                 P2 = Plowx;
                             }
                         }
                     }
-                    Avgs2 [i][klast] = P2;//klast will be knext after one iteration
+                    Avgs2[i][klast] = P2;//klast will be knext after one iteration
                     if (not HF) {
-                        Avgs1 [i][2] = P1;
+                        Avgs1[i][2] = P1;
                     }
                     //to avoid accumulating numerical errors (not sure whether necessary)
                     if (NFblocks == 3) {
-                        Avgs3 [i] = (P2 + 4 * (Avgs2 [i][knext] + Avgs2 [i][k])) * Ascale / FiltNorm;
+                        Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale / FiltNorm;
                     } else {
-                        Avgs3 [i] = -3 * P2;
+                        Avgs3[i] = -3 * P2;
                         for (int tt=0; tt<NFblocks; tt++) {
-                            Avgs3 [i] += 4 * Avgs2 [i][tt];
+                            Avgs3[i] += 4 * Avgs2[i][tt];
                         }
-                        Avgs3 [i] *= Ascale;
-                        Avgs3 [i] /= FiltNorm;
+                        Avgs3[i] *= Ascale;
+                        Avgs3[i] /= FiltNorm;
                     }
                 }
             }
@@ -705,24 +705,24 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
             tA = t / dfAbs;
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
+                Slice[i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            Aglobal[tA] = Slice [NChannels / 2];
+            Aglobal[tA] = Slice[NChannels / 2];
         }
         for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
-            Aglobaldiff [t] = Aglobal[t] - Aglobal[t - dfSign];
+            Aglobaldiff[t] = Aglobal[t] - Aglobal[t - dfSign];
         }
         for (int t=tx/dfAbs; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
             //tA = t / dfAbs;
-            AglobalSmth [t] = Aglobal[t];
+            AglobalSmth[t] = Aglobal[t];
             for (int ii=1; ii<tSmth1; ii++) {
-                AglobalSmth [t] += Aglobal[t + ii*dfSign];
+                AglobalSmth[t] += Aglobal[t + ii*dfSign];
             }
-            AglobalSmth [t] *= AscaleG;
+            AglobalSmth[t] *= AscaleG;
         }
         for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
-            AglobalSdiff [t] = AglobalSmth [t] - AglobalSmth [t - dfSign];
+            AglobalSdiff[t] = AglobalSmth[t] - AglobalSmth[t - dfSign];
         }
         //initialize slow filter
         if (HF) {
@@ -737,39 +737,39 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         for (int t=tx; dfSign*t<dfSign*ti; t+=df) {
             tA = t / dfAbs;
             for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
-                vSmth [i] = vm[i*tInc + t];
+                vSmth[i] = vm[i*tInc + t];
                 for (int ii=1; ii<tSmth; ii++) {
-                    vSmth [i] += vm[i*tInc + t + ii * df];
+                    vSmth[i] += vm[i*tInc + t + ii * df];
                 }
-                vSmth [i] *= AscaleV;
+                vSmth[i] *= AscaleV;
                 //CHANNEL OUT OF LINEAR REGIME
                 if (((vm[i*tInc + t + 2*df] + 4) % 4096) < 10) {
-                    if (A [i] < artT) {//reset only when it starts leaving the linear regime
-                        A [i] = artT;
+                    if (A[i] < artT) {//reset only when it starts leaving the linear regime
+                        A[i] = artT;
                     }
                 } else {
-                    Qm [i] = (2 * (Qm [i] + Qd [i]) + vSmth [i] - AglobalSmth[tA]) / 3;//update Qm
+                    Qm[i] = (2 * (Qm[i] + Qd[i]) + vSmth[i] - AglobalSmth[tA]) / 3;//update Qm
                 }
             }
         }
         //shift Aglobal entries
         for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
             Aglobal[t + tfiA] = Aglobal[t];
-            Aglobaldiff [t + tfiA] = Aglobaldiff [t];
+            Aglobaldiff[t + tfiA] = Aglobaldiff[t];
         }
         for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
-            AglobalSmth [t + tfiA] = AglobalSmth [t];
-            AglobalSdiff [t + tfiA] = AglobalSdiff [t];
+            AglobalSmth[t + tfiA] = AglobalSmth[t];
+            AglobalSdiff[t + tfiA] = AglobalSdiff[t];
         }
     }
     //shift Aglobal entries
     for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
         Aglobal[t] = Aglobal[t + tfiA];
-        Aglobaldiff [t] = Aglobaldiff [t + tfiA];
+        Aglobaldiff[t] = Aglobaldiff[t + tfiA];
     }
     for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
-        AglobalSmth [t] = AglobalSmth [t + tfiA];
-        AglobalSdiff [t] = AglobalSdiff [t + tfiA];
+        AglobalSmth[t] = AglobalSmth[t + tfiA];
+        AglobalSdiff[t] = AglobalSdiff[t + tfiA];
     }
     //new Aglobal entries
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
@@ -779,21 +779,21 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
         }
         std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
-        Aglobaldiff [tA] = Aglobal[tA] - Aglobal[tA - dfSign];
-        AglobalSmth [tA+tdSmth1] = Aglobal[tA+tdSmth1];
+        Aglobaldiff[tA] = Aglobal[tA] - Aglobal[tA - dfSign];
+        AglobalSmth[tA+tdSmth1] = Aglobal[tA+tdSmth1];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
+            AglobalSmth[tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
         }
-        AglobalSmth [tA+tdSmth1] *= AscaleG;
+        AglobalSmth[tA+tdSmth1] *= AscaleG;
         AglobalSdiff[tA+tdSmth1]=AglobalSmth[tA+tdSmth1]-AglobalSmth[t+tdSmth];
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm[i*tInc + ti - df];
+        vSmth[i] = vm[i*tInc + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm[i*tInc + ti + ii * df];
+            vSmth[i] += vm[i*tInc + ti + ii * df];
         }
-        vSmth [i] *= AscaleV;
+        vSmth[i] *= AscaleV;
     }
     for (int t=ti; dfSign*t<dfSign*tf; t+=df) {//loop over data, will be removed for an online algorithm
         dt = (dt+1) % dtMx;
@@ -803,73 +803,73 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
             AvgVoltageDefault (vm, t0, t+TauFiltOffset, tInc);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
+            vSmth[i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         // SPIKE DETECTION
         for (int i=1-recalibTrigger; i<NChannels; i++) {//loop across channels
             //CHANNEL OUT OF LINEAR REGIME
             if (((vm[i*tInc + t + df] + 4) % 4096) < 10) {
-                if (A [i] < artT) {//reset only when it starts leaving the linear regime
-                    A [i] = artT;
+                if (A[i] < artT) {//reset only when it starts leaving the linear regime
+                    A[i] = artT;
                 }
             }
             //DEFAULT OPERATIONS
-            else if (A [i] == 0) {
-                QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
+            else if (A[i] == 0) {
+                QmPreD[i] += (Avgs3[i] - QmPre[i]-QmPreD[i]) /(TauFilt);
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
                 //vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
-                Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
-                if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
-                    if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
-                        FVbias [i]++;
+                Qdiff[i][dt]= (QmPre[i]+QmPreD[i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
+                if ((AglobalSdiff[tA] * (Qdiff[i][dt] - Qdiff[i][dtPre])) != 0) {
+                    if ((AglobalSdiff[tA] > 0) == ((Qdiff[i][dt] - Qdiff[i][dtPre]) > 0)) {//(SIp[i]>0) {
+                        FVbias[i]++;
                     } else {
-                        FVbias [i]--;
+                        FVbias[i]--;
                     }//Qdiff negative-->Ascale!!!;
                 }
-                //Qdiff [i][dt] = (vm[i*tInc + t - df] + vm[i*tInc + t] + vm[i*tInc + t + df] - Aglobal[tA]) * Ascale - Qm [i];//difference between ADC counts and Qm
+                //Qdiff[i][dt] = (vm[i*tInc + t - df] + vm[i*tInc + t] + vm[i*tInc + t + df] - Aglobal[tA]) * Ascale - Qm[i];//difference between ADC counts and Qm
                 //UPDATE Qm and Qd
-                if (Qdiff [i][dt] > 0) {
-                    if (Qdiff [i][dt] > Qd [i]) {
-                        Qm [i] += Qd [i] / Tau_m0;
-                        if (Qdiff [i][dt] < (5 * Qd [i])) {
-                            Qd [i]++;
-                        } else if ((Qd [i] > Qdmin) & (Qdiff [i][dt] > (6 * Qd [i]))) {
-                            Qd [i]--;
+                if (Qdiff[i][dt] > 0) {
+                    if (Qdiff[i][dt] > Qd[i]) {
+                        Qm[i] += Qd[i] / Tau_m0;
+                        if (Qdiff[i][dt] < (5 * Qd[i])) {
+                            Qd[i]++;
+                        } else if ((Qd[i] > Qdmin) & (Qdiff[i][dt] > (6 * Qd[i]))) {
+                            Qd[i]--;
                         }
-                    } else if (Qd [i] > Qdmin) {//set a minimum level for Qd
-                        Qd [i]--;
+                    } else if (Qd[i] > Qdmin) {//set a minimum level for Qd
+                        Qd[i]--;
                     }
-                } else if (Qdiff [i][dt] < -Qd [i]) {
-                    Qm [i] -= Qd [i] / Tau_m0 / 2;
+                } else if (Qdiff[i][dt] < -Qd[i]) {
+                    Qm[i] -= Qd[i] / Tau_m0 / 2;
 
                 }
             }
             //AFTER CHANNEL WAS OUT OF LINEAR REGIME
             else {
-                Qm [i] = (2 * (Qm [i] + Qd [i]) + vSmth [i] - AglobalSmth[tA]) / 3;//update Qm
-                A [i]--;
+                Qm[i] = (2 * (Qm[i] + Qd[i]) + vSmth[i] - AglobalSmth[tA]) / 3;//update Qm
+                A[i]--;
             }
         }
     }
     if (df > 0) {
         if (t0 >=199*(dfTI[2] - dfTI[1])) {
             for (int i=0; i<NChannels; i++) {
-                Qm [i] = 0;
+                Qm[i] = 0;
                 for (int ij=0; ij<dtMx; ij++) {
-                    Qdiff [i][ij] = 0;
+                    Qdiff[i][ij] = 0;
                 }
-                A [i] = 0;
+                A[i] = 0;
             }
         }
     } else {
         if (t0 <=t0x-199*(dfTI[2] - dfTI[1])) {
             for (int i=0; i<NChannels; i++) {
-                Qm [i] = 0;
+                Qm[i] = 0;
                 for (int ij=0; ij<dtMx; ij++) {
-                    Qdiff [i][ij] = 0;
+                    Qdiff[i][ij] = 0;
                 }
-                A [i] = 0;
+                A[i] = 0;
             }
         }
     }
@@ -899,7 +899,7 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     wInfo << "# Smoothing window (amplitudes):\n" << Lspike << "\n";
     wInfo << "# Recording channels:\n";
     for (int i=0; i< NChannels; i++) {
-        wInfo << Indices [i] << "\n";
+        wInfo << Indices[i] << "\n";
     }
     wInfo << "# Recording channels4:\n";
     for (int i=0; i<NChannels; i++) {
@@ -928,24 +928,24 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
     for (int t=tx; dfSign*t<dfSign*ty; t+=df) {//loop over data, will be removed for an online algorithm
         tA = t / dfAbs;
         for (int i=1; i<NChannels; i++) {//loop across channels
-            Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t+df]) % 4095;
+            Slice[i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t+df]) % 4095;
         }
         std::sort(Slice, Slice + NChannels);
-        Aglobal[tA] = Slice [NChannels / 2];
+        Aglobal[tA] = Slice[NChannels / 2];
     }
     for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df; t+=dfSign) {
-        Aglobaldiff [t] = Aglobal[t] - Aglobal[t - dfSign];
+        Aglobaldiff[t] = Aglobal[t] - Aglobal[t - dfSign];
     }
     for (int t=tx/dfAbs; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
         //tA = t / dfAbs;
-        AglobalSmth [t] = Aglobal[t];
+        AglobalSmth[t] = Aglobal[t];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [t] += Aglobal[t + ii*dfSign];
+            AglobalSmth[t] += Aglobal[t + ii*dfSign];
         }
-        AglobalSmth [t] *= AscaleG;
+        AglobalSmth[t] *= AscaleG;
     }
     for (int t=tx/dfAbs+dfSign; dfSign*t<ty/df-dfSign*tSmth1; t+=dfSign) {
-        AglobalSdiff [t] = AglobalSmth [t] - AglobalSmth [t - dfSign];
+        AglobalSdiff[t] = AglobalSmth[t] - AglobalSmth[t - dfSign];
     }
     //initialize slow filter
     if (HF) {
@@ -970,15 +970,15 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
         //now have to change voltage
         //can use Qm?
         for (int i=1; i<NChannels; i++) {//loop across channels
-            vSmth [i] = vm[i*tInc + t];
+            vSmth[i] = vm[i*tInc + t];
             for (int ii=1; ii<tSmth; ii++) {
-                vSmth [i] += vm[i*tInc + t + ii * df];
+                vSmth[i] += vm[i*tInc + t + ii * df];
             }
-            vSmth [i] *= AscaleV;
+            vSmth[i] *= AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
             //QmPre[i]=(vm[i*tInc + t]+vm[i*tInc + t+df]+vm[i*tInc + t+2*df]-Aglobal[tA])*Ascale;
-        //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
+        //	//QmPreD[i] += (Avgs3[i] - QmPre[i]-QmPreD[i]) /(TauFilt);
+        //	Slice[i] = QmPre[i]+QmPreD[i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
         }
 
         //Array.Sort(Slice);
@@ -994,19 +994,19 @@ void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, 
                 }
             }
             else {
-                QmPreD[i]  += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
-                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre [i]+QmPreD [i])/3;//update Qm vm[i*tInc + t]+vm[i*tInc + t+df]+vm[i*tInc + t+2*df]
+                QmPreD[i]  += (Avgs3[i] - QmPre[i]-QmPreD[i]) /(TauFilt);
+                Qm[i]=(2*(Qm[i]+Qd[i])+QmPre[i]+QmPreD[i])/3;//update Qm vm[i*tInc + t]+vm[i*tInc + t+df]+vm[i*tInc + t+2*df]
             }
         }
     }
     //shift Aglobal entries
     for (int t=tx/dfAbs; dfSign*t<tm/df; t+=dfSign) {
         Aglobal[t + tfiA] = Aglobal[t];
-        Aglobaldiff [t + tfiA] = Aglobaldiff [t];
+        Aglobaldiff[t + tfiA] = Aglobaldiff[t];
     }
     for (int t=tx/dfAbs; dfSign*t<tms/df; t+=dfSign) {
-        AglobalSmth [t + tfiA] = AglobalSmth [t];
-        AglobalSdiff [t + tfiA] = AglobalSdiff [t];
+        AglobalSmth[t + tfiA] = AglobalSmth[t];
+        AglobalSdiff[t + tfiA] = AglobalSdiff[t];
     }
 }
 
@@ -1038,11 +1038,11 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
     //shift Aglobal entries
     for (int t=tx/ dfAbs; dfSign*t<tm/df; t+=dfSign) {
         Aglobal[t] = Aglobal[t + tfiA];
-        Aglobaldiff [t] = Aglobaldiff [t + tfiA];
+        Aglobaldiff[t] = Aglobaldiff[t + tfiA];
     }
     for (int t=tx/ dfAbs; dfSign*t<tms/df; t+=dfSign) {
-        AglobalSmth [t] = AglobalSmth [t + tfiA];
-        AglobalSdiff [t] = AglobalSdiff [t + tfiA];
+        AglobalSmth[t] = AglobalSmth[t + tfiA];
+        AglobalSdiff[t] = AglobalSdiff[t + tfiA];
     }
     //new Aglobal entries
     for (int t=tm; dfSign*t<dfSign*ty; t+=df) {
@@ -1052,21 +1052,21 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
         }
         std::sort(Slice, Slice + NChannels);
         Aglobal[tA]=Slice[NChannels / 2];
-        Aglobaldiff [tA] = Aglobal[tA] - Aglobal[tA - dfSign];
-        AglobalSmth [tA+tdSmth1] = Aglobal[tA+tdSmth1];
+        Aglobaldiff[tA] = Aglobal[tA] - Aglobal[tA - dfSign];
+        AglobalSmth[tA+tdSmth1] = Aglobal[tA+tdSmth1];
         for (int ii=1; ii<tSmth1; ii++) {
-            AglobalSmth [tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
+            AglobalSmth[tA+tdSmth1] += Aglobal[tA+tdSmth1 + ii*dfSign];
         }
-        AglobalSmth [tA+tdSmth1] *= AscaleG;
+        AglobalSmth[tA+tdSmth1] *= AscaleG;
         AglobalSdiff[tA+tdSmth1]=AglobalSmth[tA+tdSmth1]-AglobalSmth[t+tdSmth];
     }
     //avoid cumulation of numerical errors
     for (int i=1; i<NChannels; i++) {//loop across channels
-        vSmth [i] = vm[i*tInc + ti - df];
+        vSmth[i] = vm[i*tInc + ti - df];
         for (int ii=0; ii<tSmth1; ii++) {
-            vSmth [i] += vm[i*tInc + ti + ii * df];
+            vSmth[i] += vm[i*tInc + ti + ii * df];
         }
-        vSmth [i] *= AscaleV;
+        vSmth[i] *= AscaleV;
     }
 
     for (int t=ti; dfSign*t<dfSign*tf; t+=df) {//loop over data, will be removed for an online algorithm
@@ -1081,7 +1081,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
             AvgVoltageDefault (vm, t0, t+TauFiltOffset, tInc);
         }
         for (int i=1; i<NChannels; i++) {//update vSmth
-            vSmth [i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
+            vSmth[i] += (vm[i*tInc + t+ tSmth1 * df]-vm[i*tInc + t - df]) *AscaleV;
             QmPre[i]=vSmth[i]-AglobalSmth[tA];
         }
         ////for (int i=1; i<NChannels; i++) {//loop across channels
@@ -1089,11 +1089,11 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
         ////}
         //for (int i=1; i<NChannels; i++) {//loop across channels
         //	QmPre[i]=((vm[i*tInc + t-df])%4095+(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095)*Ascale;
-        //	//QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
+        //	//QmPreD[i] += (Avgs3[i] - QmPre[i]-QmPreD[i]) /(TauFilt);
         //	//if (i == 2120) {
-        //	//	Console.WriteLine (QmPreD [i]);
+        //	//	Console.WriteLine (QmPreD[i]);
         //	//}
-        //	Slice [i] = QmPre [i]+QmPreD [i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
+        //	Slice[i] = QmPre[i]+QmPreD[i];//((vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095+(vm[i*tInc + t+2*df])%4095);
         //	//Slice[i]=((vm[i*tInc + t-df])%4095+(vm[i*tInc + t])%4095+(vm[i*tInc + t+df])%4095);
         //}
         //Array.Sort(Slice);
@@ -1121,8 +1121,8 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                     std::cout << (t+t0)/Sampling/dfAbs << " sec" << std::endl;// to monitor progress of spike detection                    
                     Acal=0;//to remember last recalibration event
                     for (int i=0; i<NChannels; i++) {
-                        FVsbias [i] += FVbias [i];//want to see whether this matches the correlation structure
-                        Vsqbias [i] += (FVbias [i] / 100) * (FVbias [i] / 100);
+                        FVsbias[i] += FVbias[i];//want to see whether this matches the correlation structure
+                        Vsqbias[i] += (FVbias[i] / 100) * (FVbias[i] / 100);
                         SqIglobal+=AglobalSdiff[tA]*AglobalSdiff[tA];
                     }
                 }
@@ -1162,36 +1162,36 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                     /*
                     if (ACF) {
                         for (int ii=0; ii<Math.Min(artT-A[i],6); ii++) {//is only for one step in the past...ignoring others
-                            SIprod [i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm[i*tInc + t + (6 - ii) * df] - vm[i*tInc + t + (3 - ii) * df]) / Ascale;
+                            SIprod[i][12 - ii] -= (Aglobal[tA+dfSign]-Aglobal[tA+2*dfSign]) * (vm[i*tInc + t + (6 - ii) * df] - vm[i*tInc + t + (3 - ii) * df]) / Ascale;
                         }
                     }
                     */
                     for (int ij=0; ij<dtMx; ij++) {
-                        Qdiff [i][ij] = 0;
+                        Qdiff[i][ij] = 0;
                     }
                     A[i]=artT;
                 }
             }
             //DEFAULT OPERATIONS
             else if (A[i]==0) {
-                QmPreD [i] += (Avgs3[i] - QmPre [i]-QmPreD [i]) /(TauFilt);
+                QmPreD[i] += (Avgs3[i] - QmPre[i]-QmPreD[i]) /(TauFilt);
                 /*
                 if (ACF) {
-                    SqIv [i] += (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]) * (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]);
+                    SqIv[i] += (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]) * (vm[i*tInc + t + df] - vm[i*tInc + t - 2 * df]);
                     for (int iii=-6; iii<7; iii++) {
-                        SIprod [i][iii + 6] += Aglobaldiff[tA] * (vm[i*tInc + t + (1 + iii) * df] - vm[i*tInc + t - (2 - iii) * df]) / Ascale;
+                        SIprod[i][iii + 6] += Aglobaldiff[tA] * (vm[i*tInc + t + (1 + iii) * df] - vm[i*tInc + t - (2 - iii) * df]) / Ascale;
                         //t-8...t+7
                     }
                 }
                 */
                 Vbias[i]=FVbias[i]*AglobalSdiff[tA]/Sampling;
                 //vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
-                Qdiff [i][dt]= (QmPre [i]+QmPreD [i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
-                if ((AglobalSdiff[tA] * (Qdiff [i][dt] - Qdiff [i][dtPre])) != 0) {
-                    if ((AglobalSdiff[tA] > 0) == ((Qdiff [i][dt] - Qdiff [i][dtPre]) > 0)) {//(SIp[i]>0) {
-                        FVbias [i]++;
+                Qdiff[i][dt]= (QmPre[i]+QmPreD[i])-Qm[i]-Vbias[i];//difference between ADC counts and Qm
+                if ((AglobalSdiff[tA] * (Qdiff[i][dt] - Qdiff[i][dtPre])) != 0) {
+                    if ((AglobalSdiff[tA] > 0) == ((Qdiff[i][dt] - Qdiff[i][dtPre]) > 0)) {//(SIp[i]>0) {
+                        FVbias[i]++;
                     } else {
-                        FVbias [i]--;
+                        FVbias[i]--;
                     }//Qdiff negative-->Ascale!!!;
                 }
                 //FVsbias[i]+=FVbias[i];//want to see whether this matches the correlation structure
@@ -1217,34 +1217,34 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
             }
             //AFTER CHANNEL WAS OUT OF LINEAR REGIME
             else {
-                Qm[i]=(2*Qm[i]+(QmPre [i]+QmPreD [i])+2*Qd[i])/3;//update Qm  vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
-                if (A [i] == artT) {
+                Qm[i]=(2*Qm[i]+(QmPre[i]+QmPreD[i])+2*Qd[i])/3;//update Qm  vm[i*tInc + t-df]+vm[i*tInc + t]+vm[i*tInc + t+df]
+                if (A[i] == artT) {
                     QmPreD[i] = 0;
                 }
                 A[i]--;
             }
             //do above
-            if (Qdiff [i][ dt] * AmpScale > Qmax [i][dtPre]) {
-                Qmax [i][dt] = Qdiff [i][dt] * AmpScale;//overflow issues?
-                QmaxE [i] = dtE;
-            } else if (dtE == QmaxE [i]) {
-                if (Qdiff [i][dt] > Qdiff [i][dtPre]) {
-                    Qmax [i][dt] = Qdiff [i][dt] * AmpScale;//overflow issues?
-                    //QmaxE [i] = dtE;//redundant
+            if (Qdiff[i][ dt] * AmpScale > Qmax[i][dtPre]) {
+                Qmax[i][dt] = Qdiff[i][dt] * AmpScale;//overflow issues?
+                QmaxE[i] = dtE;
+            } else if (dtE == QmaxE[i]) {
+                if (Qdiff[i][dt] > Qdiff[i][dtPre]) {
+                    Qmax[i][dt] = Qdiff[i][dt] * AmpScale;//overflow issues?
+                    //QmaxE[i] = dtE;//redundant
                 } else {
-                    Qmax [i][dt] = Qdiff [i][dtPre] * AmpScale;//overflow issues?
-                    QmaxE [i] = dtEx;
+                    Qmax[i][dt] = Qdiff[i][dtPre] * AmpScale;//overflow issues?
+                    QmaxE[i] = dtEx;
                 }
             } else {
-                Qmax [i][dt] = Qmax [i][dtPre];
+                Qmax[i][dt] = Qmax[i][dtPre];
                 /*
                 //thresholding
-                if ((QmaxE [i] / Qd [i]) > (threshold - 2)) {
+                if ((QmaxE[i] / Qd[i]) > (threshold - 2)) {
                     for (int ii=0; ii<4; ii++) {
-                        if (ChInd5c [i] [ii] > -1) {
-                            T4 [ChInd5c [i] [ii]] = true;
+                        if (ChInd5c[i][ii] > -1) {
+                            T4[ChInd5c[i][ii]] = true;
                         }
-                        if ((QmaxE [i] / Qd [i]) > (threshold - 2)) {
+                        if ((QmaxE[i] / Qd[i]) > (threshold - 2)) {
                         }
                     }
                 }
@@ -1259,13 +1259,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 a4=0;
                 for (int ii=1; ii<4; ii++) {
                     if (A[ChInd4a[i][ii]]==0){
-                        if (Qmax [ChInd4a[i][ChS4Min]][dt]/Qd [ChInd4a[i][ChS4Min]] > Qmax [ChInd4a[i][ii]][dt]/Qd [ChInd4a[i][ii]]){
-                        //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
-                            a4 += Qmax [ChInd4a[i][ChS4Min]][dt]/ Qd [ChInd4a[i][ChS4Min]];
+                        if (Qmax[ChInd4a[i][ChS4Min]][dt]/Qd[ChInd4a[i][ChS4Min]] > Qmax[ChInd4a[i][ii]][dt]/Qd[ChInd4a[i][ii]]){
+                        //if (Qmax[ChInd4a[i][ChS4Min]][dt] > Qmax[ChInd4a[i][ii]][dt]) {
+                            a4 += Qmax[ChInd4a[i][ChS4Min]][dt]/ Qd[ChInd4a[i][ChS4Min]];
                             ChS4Min = ii;
                         }
                         else {
-                            a4 += Qmax [ChInd4a[i][ii]][dt]/ Qd [ChInd4a[i][ii]];
+                            a4 += Qmax[ChInd4a[i][ii]][dt]/ Qd[ChInd4a[i][ii]];
                         }
                     }
                 }
@@ -1323,13 +1323,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
                             std::sort(tQmA, tQmA + tQmf);
-                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            b = tQmA[tQmm]+tQmA[tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
                             for (int kk=Li; kk<Lf;kk++){
-                                Lm = Lw [0] * tShape [kk];
+                                Lm = Lw[0] * tShape[kk];
                                 for (int kkk=1; kkk<Lspike; kkk++) {
-                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                    Lm += Lw[kkk] * tShape[kkk+kk];
                                 }
                                 if (Lm<Lmx){
                                     Lmx=Lm;
@@ -1354,13 +1354,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
                                 std::sort(tQmA, tQmA + tQmf);
-                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                b = tQmA[tQmm]+tQmA[tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
                                 for (int kk=Li; kk<Lf;kk++){
-                                    Lm = Lw [0] * tShape [kk];
+                                    Lm = Lw[0] * tShape[kk];
                                     for (int kkk=1; kkk<Lspike; kkk++) {
-                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                        Lm += Lw[kkk] * tShape[kkk+kk];
                                     }
                                     if (Lm<Lmx){
                                         Lmx=Lm;
@@ -1399,13 +1399,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
                             std::sort(tQmA, tQmA + tQmf);
-                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            b = tQmA[tQmm]+tQmA[tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
                             for (int kk=Li; kk<Lf;kk++){
-                                Lm = Lw [0] * tShape [kk];
+                                Lm = Lw[0] * tShape[kk];
                                 for (int kkk=1; kkk<Lspike; kkk++) {
-                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                    Lm += Lw[kkk] * tShape[kkk+kk];
                                 }
                                 if (Lm<Lmx){
                                     Lmx=Lm;
@@ -1430,13 +1430,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
                                 std::sort(tQmA, tQmA + tQmf);
-                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                b = tQmA[tQmm]+tQmA[tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
                                 for (int kk=Li; kk<Lf;kk++){
-                                    Lm = Lw [0] * tShape [kk];
+                                    Lm = Lw[0] * tShape[kk];
                                     for (int kkk=1; kkk<Lspike; kkk++) {
-                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                        Lm += Lw[kkk] * tShape[kkk+kk];
                                     }
                                     if (Lm<Lmx){
                                         Lmx=Lm;
@@ -1478,23 +1478,23 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 ChS4Min = 0;
                 a4 = 0;
                 for (int ii=1; ii<4; ii++) {
-                    if (A [ChInd4a [i] [ii]] == 0) {
-                        if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
-                            //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
-                            a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
+                    if (A[ChInd4a[i][ii]] == 0) {
+                        if (Qmax[ChInd4a[i][ChS4Min]][dt] / Qd[ChInd4a[i][ChS4Min]] > Qmax[ChInd4a[i][ii]][dt] / Qd[ChInd4a[i][ii]]) {
+                            //if (Qmax[ChInd4a[i][ChS4Min]][dt] > Qmax[ChInd4a[i][ii]][dt]) {
+                            a4 += Qmax[ChInd4a[i][ChS4Min]][dt] / Qd[ChInd4a[i][ChS4Min]];
                             ChS4Min = ii;
                         } else {
-                            a4 += Qmax [ChInd4a [i] [ii]][dt] / Qd [ChInd4a [i] [ii]];
+                            a4 += Qmax[ChInd4a[i][ii]][dt] / Qd[ChInd4a[i][ii]];
                         }
                     }
                 }
                 a4 /= 3;
                 //check for threshold crossings
                 if (a4 > threshold) {
-                    Sl4 [i] = 1;
-                    Sl4x [i] = false;
-                    Amp4 [i] = a4;
-                    AHP4 [i] = false;
+                    Sl4[i] = 1;
+                    Sl4x[i] = false;
+                    Amp4[i] = a4;
+                    AHP4[i] = false;
                 } else if (a4 < threshold-2*AmpScale) {
                     Z4next[i] = dtTMx;
                 }
@@ -1503,66 +1503,66 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 ChS4Min = 0;
                 a4 = 0;
                 for (int ii=1; ii<4; ii++) {
-                    if (A [ChInd4a [i] [ii]] == 0) {
-                        if (Qmax [ChInd4a[i][ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a[i][ii]][dt] / Qd [ChInd4a [i] [ii]]) {
-                            //if (Qmax [ChInd4a[i][ChS4Min]][dt] > Qmax [ChInd4a[i][ii]][dt]) {
-                            a4 += Qmax [ChInd4a [i] [ChS4Min]][dt] / Qd [ChInd4a [i] [ChS4Min]];
+                    if (A[ChInd4a[i][ii]] == 0) {
+                        if (Qmax[ChInd4a[i][ChS4Min]][dt] / Qd[ChInd4a[i][ChS4Min]] > Qmax[ChInd4a[i][ii]][dt] / Qd[ChInd4a[i][ii]]) {
+                            //if (Qmax[ChInd4a[i][ChS4Min]][dt] > Qmax[ChInd4a[i][ii]][dt]) {
+                            a4 += Qmax[ChInd4a[i][ChS4Min]][dt] / Qd[ChInd4a[i][ChS4Min]];
                             ChS4Min = ii;
                         } else {
-                            a4 += Qmax [ChInd4a [i] [ii]][dt] / Qd [ChInd4a [i] [ii]];
+                            a4 += Qmax[ChInd4a[i][ii]][dt] / Qd[ChInd4a[i][ii]];
                         }
                     }
                 }
                 a4 /= 3;
                 //check for previous threshold crossing
                 if (a4 > threshold) {
-                    Sl4 [i] = 1;
-                    Sl4x [i] = false;
-                    Amp4 [i] = a4;
-                    AHP4 [i] = false;
+                    Sl4[i] = 1;
+                    Sl4x[i] = false;
+                    Amp4[i] = a4;
+                    AHP4[i] = false;
                     ChS4Min = 0;
                     a4 = 0;
                     for (int ii=1; ii<4; ii++) {
-                        if (A [ChInd4a [i] [ii]] == 0) {
-                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]]) {
-                                //if (Qmax [ChInd4a[i][ChS4Min],dtPre] > Qmax [ChInd4a[i][ii],dtPre]) {
-                                a4 += Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]];
+                        if (A[ChInd4a[i][ii]] == 0) {
+                            if (Qmax[ChInd4a[i][ChS4Min]][dtPre] / Qd[ChInd4a[i][ChS4Min]] > Qmax[ChInd4a[i][ii]][dtPre] / Qd[ChInd4a[i][ii]]) {
+                                //if (Qmax[ChInd4a[i][ChS4Min],dtPre] > Qmax[ChInd4a[i][ii],dtPre]) {
+                                a4 += Qmax[ChInd4a[i][ChS4Min]][dtPre] / Qd[ChInd4a[i][ChS4Min]];
                                 ChS4Min = ii;
                             } else {
-                                a4 += Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]];
+                                a4 += Qmax[ChInd4a[i][ii]][dtPre] / Qd[ChInd4a[i][ii]];
                             }
                         }
                     }
                     a4 /= 3;
                     //check whether previous ADC count is higher
-                    if (Amp4 [i] < a4) {
-                        Sl4 [i] = 2;//reset peak value;
-                        Amp4 [i] = a4;
+                    if (Amp4[i] < a4) {
+                        Sl4[i] = 2;//reset peak value;
+                        Amp4[i] = a4;
                     }
                 } else if (a4 < threshold -2*AmpScale) {
-                    Z4next [i] = dtTMx;
+                    Z4next[i] = dtTMx;
                 }
                 //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
                 else {
                     ChS4Min = 0;
                     a4 = 0;
                     for (int ii=1; ii<4; ii++) {
-                        if (A [ChInd4a [i] [ii]] == 0) {
-                            if (Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]] > Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]]) {
-                                //if (Qmax [ChInd4a[i][ChS4Min],dtPre] > Qmax [ChInd4a[i][ii],dtPre]) {
-                                a4 += Qmax [ChInd4a [i] [ChS4Min]][dtPre] / Qd [ChInd4a [i] [ChS4Min]];
+                        if (A[ChInd4a[i][ii]] == 0) {
+                            if (Qmax[ChInd4a[i][ChS4Min]][dtPre] / Qd[ChInd4a[i][ChS4Min]] > Qmax[ChInd4a[i][ii]][dtPre] / Qd[ChInd4a[i][ii]]) {
+                                //if (Qmax[ChInd4a[i][ChS4Min],dtPre] > Qmax[ChInd4a[i][ii],dtPre]) {
+                                a4 += Qmax[ChInd4a[i][ChS4Min]][dtPre] / Qd[ChInd4a[i][ChS4Min]];
                                 ChS4Min = ii;
                             } else {
-                                a4 += Qmax [ChInd4a [i] [ii]][dtPre] / Qd [ChInd4a [i] [ii]];
+                                a4 += Qmax[ChInd4a[i][ii]][dtPre] / Qd[ChInd4a[i][ii]];
                             }
                         }
                     }
                     a4 /= 3;
                     if (a4 > threshold) {
-                        Sl4 [i] = 2;
-                        Sl4x [i] = false;
-                        Amp4 [i] = a4;
-                        AHP4 [i] = false;
+                        Sl4[i] = 2;
+                        Sl4x[i] = false;
+                        Amp4[i] = a4;
+                        AHP4[i] = false;
                     }
                 }
             } else {
@@ -1573,18 +1573,18 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
         for (int chIterator = 0; chIterator < ChInd5ListSize; chIterator++) {//loop across channels
             int i = ChInd5List[chIterator];
             if (Sl5[i]>0) {//Sl frames after peak value
-                ChS5Min = Qmax [ChInd5a[i][0]][dt]/Qd [ChInd5a[i][0]];
+                ChS5Min = Qmax[ChInd5a[i][0]][dt]/Qd[ChInd5a[i][0]];
                 a5=0;
                 for (int ii=1; ii<4; ii++) {
-                    if (ChS5Min < Qmax [ChInd5a[i][ii]][dt]/Qd [ChInd5a[i][ii]]) {
-                        a5 += Qmax [ChInd5a[i][ii]][dt] / Qd [ChInd5a[i][ii]];
+                    if (ChS5Min < Qmax[ChInd5a[i][ii]][dt]/Qd[ChInd5a[i][ii]]) {
+                        a5 += Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     }
                     else {
                         a5 += ChS5Min;
-                        ChS5Min=Qmax [ChInd5a[i][ii]][dt] / Qd [ChInd5a[i][ii]];
+                        ChS5Min=Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     }
                 }
-                a5+=4*Qmax[ChInd5[i]][dt]/ Qd [ChInd5[i]];
+                a5+=4*Qmax[ChInd5[i]][dt]/ Qd[ChInd5[i]];
                 a5 /= 7;
                 //TREATMENT OF THRESHOLD CROSSINGS
                 //default
@@ -1636,13 +1636,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                             tQmA[kk]=tShape[tQmX[kk]];
                         }
                         std::sort(tQmA, tQmA + tQmf);
-                        b = tQmA [tQmm]+tQmA [tQmm+1];
+                        b = tQmA[tQmm]+tQmA[tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
                         for (int kk=Li; kk<Lf;kk++){
-                            Lm = Lw [0] * tShape [kk];
+                            Lm = Lw[0] * tShape[kk];
                             for (int kkk=1; kkk<Lspike; kkk++) {
-                                Lm += Lw [kkk] * tShape [kkk+kk];
+                                Lm += Lw[kkk] * tShape[kkk+kk];
                             }
                             if (Lm<Lmx){
                                 Lmx=Lm;
@@ -1665,13 +1665,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                 tQmA[kk]=tShape[tQmX[kk]];
                             }
                             std::sort(tQmA, tQmA + tQmf);
-                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            b = tQmA[tQmm]+tQmA[tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
                             for (int kk=Li; kk<Lf;kk++){
-                                Lm = Lw [0] * tShape [kk];
+                                Lm = Lw[0] * tShape[kk];
                                 for (int kkk=1; kkk<Lspike; kkk++) {
-                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                    Lm += Lw[kkk] * tShape[kkk+kk];
                                 }
                                 if (Lm<Lmx){
                                     Lmx=Lm;
@@ -1696,13 +1696,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                     tQmA[kk]=tShape[tQmX[kk]];
                                 }
                                 std::sort(tQmA, tQmA + tQmf);
-                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                b = tQmA[tQmm]+tQmA[tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
                                 for (int kk=Li; kk<Lf;kk++){
-                                    Lm = Lw [0] * tShape [kk];
+                                    Lm = Lw[0] * tShape[kk];
                                     for (int kkk=1; kkk<Lspike; kkk++) {
-                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                        Lm += Lw[kkk] * tShape[kkk+kk];
                                     }
                                     if (Lm<Lmx){
                                         Lmx=Lm;
@@ -1739,13 +1739,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                             tQmA[kk]=tShape[tQmXLong[kk]];
                         }
                         std::sort(tQmA, tQmA + tQmf);
-                        b = tQmA [tQmm]+tQmA [tQmm+1];
+                        b = tQmA[tQmm]+tQmA[tQmm+1];
                         //compute max. amplitude above baseline
                         Lmx = Lsw*b;
                         for (int kk=Li; kk<Lf;kk++){
-                            Lm = Lw [0] * tShape [kk];
+                            Lm = Lw[0] * tShape[kk];
                             for (int kkk=1; kkk<Lspike; kkk++) {
-                                Lm += Lw [kkk] * tShape [kkk+kk];
+                                Lm += Lw[kkk] * tShape[kkk+kk];
                             }
                             if (Lm<Lmx){
                                 Lmx=Lm;
@@ -1768,13 +1768,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                 tQmA[kk]=tShape[tQmXLong[kk]];
                             }
                             std::sort(tQmA, tQmA + tQmf);
-                            b = tQmA [tQmm]+tQmA [tQmm+1];
+                            b = tQmA[tQmm]+tQmA[tQmm+1];
                             //compute max. amplitude above baseline
                             Lmx = Lsw*b;
                             for (int kk=Li; kk<Lf;kk++){
-                                Lm = Lw [0] * tShape [kk];
+                                Lm = Lw[0] * tShape[kk];
                                 for (int kkk=1; kkk<Lspike; kkk++) {
-                                    Lm += Lw [kkk] * tShape [kkk+kk];
+                                    Lm += Lw[kkk] * tShape[kkk+kk];
                                 }
                                 if (Lm<Lmx){
                                     Lmx=Lm;
@@ -1799,13 +1799,13 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                                     tQmA[kk]=tShape[tQmXLong[kk]];
                                 }
                                 std::sort(tQmA, tQmA + tQmf);
-                                b = tQmA [tQmm]+tQmA [tQmm+1];
+                                b = tQmA[tQmm]+tQmA[tQmm+1];
                                 //compute max. amplitude above baseline
                                 Lmx = Lsw*b;
                                 for (int kk=Li; kk<Lf;kk++){
-                                    Lm = Lw [0] * tShape [kk];
+                                    Lm = Lw[0] * tShape[kk];
                                     for (int kkk=1; kkk<Lspike; kkk++) {
-                                        Lm += Lw [kkk] * tShape [kkk+kk];
+                                        Lm += Lw[kkk] * tShape[kkk+kk];
                                     }
                                     if (Lm<Lmx){
                                         Lmx=Lm;
@@ -1842,88 +1842,88 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
             }
             //else if (ChInd5[i]>-1){
             //if (Qmax[ChInd5[i]][dt]>(thr5*Qd[i])){
-            else if (Z5next [i] == 0) {
-                ChS5Min = Qmax [ChInd5a [i] [0]][dt] / Qd [ChInd5a [i] [0]];
+            else if (Z5next[i] == 0) {
+                ChS5Min = Qmax[ChInd5a[i][0]][dt] / Qd[ChInd5a[i][0]];
                 a5 = 0;
                 for (int ii=1; ii<4; ii++) {
-                    if (ChS5Min < Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]]) {
-                        a5 += Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    if (ChS5Min < Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]]) {
+                        a5 += Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     } else {
                         a5 += ChS5Min;
-                        ChS5Min = Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                        ChS5Min = Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     }
                 }
-                a5 += 4 * Qmax [ChInd5 [i]][dt] / Qd [ChInd5 [i]];
+                a5 += 4 * Qmax[ChInd5[i]][dt] / Qd[ChInd5[i]];
                 a5 /= 7;
                 //check for threshold crossings
                 if (a5 > threshold) {
-                    Sl5 [i] = 1;
-                    Sl5x [i] = false;
-                    Amp5 [i] = a5;
-                    AHP5 [i] = false;
+                    Sl5[i] = 1;
+                    Sl5x[i] = false;
+                    Amp5[i] = a5;
+                    AHP5[i] = false;
                 } else if (a5 < threshold -2*AmpScale) {
-                    Z5next [i] = dtTMx;
+                    Z5next[i] = dtTMx;
                 }
-            } else if (Z5next [i] == 1) {//check for previous one as well
-                Z5next [i] --;
-                ChS5Min = Qmax [ChInd5a [i] [0]][dt] / Qd [ChInd5a [i] [0]];
+            } else if (Z5next[i] == 1) {//check for previous one as well
+                Z5next[i] --;
+                ChS5Min = Qmax[ChInd5a[i][0]][dt] / Qd[ChInd5a[i][0]];
                 a5 = 0;
                 for (int ii=1; ii<4; ii++) {
-                    if (ChS5Min < Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]]) {
-                        a5 += Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                    if (ChS5Min < Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]]) {
+                        a5 += Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     } else {
                         a5 += ChS5Min;
-                        ChS5Min = Qmax [ChInd5a [i] [ii]][dt] / Qd [ChInd5a [i] [ii]];
+                        ChS5Min = Qmax[ChInd5a[i][ii]][dt] / Qd[ChInd5a[i][ii]];
                     }
                 }
-                a5 += 4 * Qmax [ChInd5 [i]][dt] / Qd [ChInd5 [i]];
+                a5 += 4 * Qmax[ChInd5[i]][dt] / Qd[ChInd5[i]];
                 a5 /= 7;
                 //check for previous threshold crossing
                 if (a5 > threshold) {
-                    Sl5 [i] = 1;
-                    Sl5x [i] = false;
-                    Amp5 [i] = a5;
-                    AHP5 [i] = false;
-                    ChS5Min = Qmax [ChInd5a [i] [0]][dtPre] / Qd [ChInd5a [i] [0]];
+                    Sl5[i] = 1;
+                    Sl5x[i] = false;
+                    Amp5[i] = a5;
+                    AHP5[i] = false;
+                    ChS5Min = Qmax[ChInd5a[i][0]][dtPre] / Qd[ChInd5a[i][0]];
                     a5 = 0;
                     for (int ii=1; ii<4; ii++) {
-                        if (ChS5Min < Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]]) {
-                            a5 += Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        if (ChS5Min < Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]]) {
+                            a5 += Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]];
                         } else {
                             a5 += ChS5Min;
-                            ChS5Min = Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                            ChS5Min = Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]];
                         }
                     }
-                    a5 += 4 * Qmax [ChInd5 [i]][dtPre] / Qd [ChInd5 [i]];
+                    a5 += 4 * Qmax[ChInd5[i]][dtPre] / Qd[ChInd5[i]];
                     a5 /= 7;
                     //check for previous threshold crossing
-                    if (Amp5 [i] < a5) {
-                        Sl5 [i] = 2;
-                        Amp5 [i] = a5;
+                    if (Amp5[i] < a5) {
+                        Sl5[i] = 2;
+                        Amp5[i] = a5;
                     }
                 } else if (a5 < threshold -2*AmpScale) {
-                    Z5next [i] = dtTMx;
+                    Z5next[i] = dtTMx;
                 }
                 //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
                 else {
-                    ChS5Min = Qmax [ChInd5a [i] [0]][dtPre] / Qd [ChInd5a [i] [0]];
+                    ChS5Min = Qmax[ChInd5a[i][0]][dtPre] / Qd[ChInd5a[i][0]];
                     a5 = 0;
                     for (int ii=1; ii<4; ii++) {
-                        if (ChS5Min < Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]]) {
-                            a5 += Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                        if (ChS5Min < Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]]) {
+                            a5 += Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]];
                         } else {
                             a5 += ChS5Min;
-                            ChS5Min = Qmax [ChInd5a [i] [ii]][dtPre] / Qd [ChInd5a [i] [ii]];
+                            ChS5Min = Qmax[ChInd5a[i][ii]][dtPre] / Qd[ChInd5a[i][ii]];
                         }
                     }
-                    a5 += 4 * Qmax [ChInd5 [i]][dtPre] / Qd [ChInd5 [i]];
+                    a5 += 4 * Qmax[ChInd5[i]][dtPre] / Qd[ChInd5[i]];
                     a5 /= 7;
                     //check for previous threshold crossing
                     if (a5 > threshold) {
-                        Sl5 [i] = 2;
-                        Sl5x [i] = false;
-                        Amp5 [i] = a5;
-                        AHP5 [i] = false;
+                        Sl5[i] = 2;
+                        Sl5x[i] = false;
+                        Amp5[i] = a5;
+                        AHP5[i] = false;
                     }
                 }
             } else {
@@ -1939,21 +1939,21 @@ void InterpDetection::FinishDetection(unsigned short* vm, int skipLast, int tInc
     if (df > 0) {
         for (int t=tf; t<df*(192 - 1)-skipLast; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
+                Slice[i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            wMean << t << Slice [NChannels / 2] << "\n";
+            wMean << Slice[NChannels / 2] << "\n";
         }
     } else {
         for (int t=tf; t>0; t+=df) {//loop over data, will be removed for an online algorithm
             for (int i=1; i<NChannels; i++) {//loop across channels
-                Slice [i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
+                Slice[i] = (vm[i*tInc + t]) % 4095 + (vm[i*tInc + t + df]) % 4095;
             }
             std::sort(Slice, Slice + NChannels);
-            wMean << t << Slice [NChannels / 2] << "\n";
+            wMean << Slice[NChannels / 2] << "\n";
         }
     }
-    wMean << Slice [NChannels / 2] << "\n";
+    wMean << Slice[NChannels / 2] << "\n";
     wInfo << "#Sum(squared global fluctuations):\n";
     wInfo << SqIglobal << "\n";
     if (ACF) {
@@ -1965,7 +1965,7 @@ void InterpDetection::FinishDetection(unsigned short* vm, int skipLast, int tInc
         wInfo << "#Sum(product of channel and global fluctuations):\n";
         for (int ii=0; ii<13; ii++) {//loop across timelags
             for (int i=0; i<NChannels; i++) {//loop across channels
-                wInfo << SIprod [i][ii] << " ";
+                wInfo << SIprod[i][ii] << " ";
             }
             wInfo << "\n";
         }

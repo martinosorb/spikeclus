@@ -37,8 +37,6 @@ namespace SpkDonline {
         int MinSl;     // length considered for determining avg. spike amplitude
         
         // Parameters for reading data
-        long tInc; // 100, increment for reading data, has to be changed in main
-        // program as well
         static const int Ascale = -64; // factor to multiply to raw traces to increase
         // resolution; definition of ADC counts had been
         // changed!
@@ -60,16 +58,16 @@ namespace SpkDonline {
     public:
         Detection();
         ~Detection();
-        void InitDetection(long nFrames, double nSec, int sf, int NCh, long ti,
+        void InitDetection(long nFrames, double nSec, int sf, int NCh, long tInc,
                            long int *Indices, unsigned int nCPU);
         void SetInitialParams(int thres, int maa, int ahpthr, int maxsl, int minsl);
         void openSpikeFile(const char *name);
-        void MedianVoltage(unsigned short *vm);
-        void MeanVoltage(unsigned short *vm);
-        void MeanVoltageThread(int thread, unsigned short *vm);
-        void Iterate(unsigned short *vm, long t0);  
+        // void MedianVoltage(unsigned short *vm);
+        void MeanVoltage(unsigned short *vm, int tInc);
+        void Iterate(unsigned short *vm, long t0, int tInc);  
         void FinishDetection();
     private:
-        void IterateThread(int thread, unsigned short *vm, long t0);
+        void MeanVoltageThread(int thread, unsigned short *vm, int tInc);
+        void IterateThread(int thread, unsigned short *vm, long t0, int tInc);
     };
 };

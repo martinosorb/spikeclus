@@ -5,13 +5,11 @@ import cython
 import numpy as np
 cimport numpy as np
 cimport cython
-import h5py
 from ctypes import CDLL
 import ctypes
-from datetime import datetime
 from readUtils import openHDF5file, getHDF5params, readHDF5t
+import time
 import os
-import sys
 
 cdef extern from "SpkDslowFilter.h" namespace "SpkDslowFilter":
     cdef cppclass InterpDetection:
@@ -48,24 +46,39 @@ def interpDetect(filePath):
     cdef np.ndarray[unsigned short, mode = "c"] vm = np.zeros(nRecCh*tInc, dtype=ctypes.c_ushort)
     cdef np.ndarray[unsigned short, mode = "c"] vmx = np.zeros(nRecCh*tInc, dtype=ctypes.c_ushort)
 
-    sw = datetime.now()
+    # Setup timers  
+    initialEstT = loop1T = loop2T = finishT = 0.0; 
+
     if dfTI[0] > 0:
         t1 = 0
         tInc = dfTI[2]
+
         print 'Initial estimations...'
+
+        tic = time.time()
         for t0 in xrange(0, min(200*(dfTI[1]),nFrames-tInc), dfTI[1]):
             vm = readHDF5t(rf, t0, t0 + tInc) 
             SpkD.InitialEstimation(&vm[0], t0)
+        initialEstT += time.time() - tic
+
         print 'Start detection...'
+
+        tic = time.time()
         for t0 in xrange(0, dfTI[1], dfTI[1]):
             vm = readHDF5t(rf, t0, t0 + tInc)
             SpkD.StartDetection (&vm[0], t0, nFrames, nSec, samplingRate, &Indices[0])
             SpkD.Iterate (&vm[0], t0, tInc)
-            t1 += dfTI[1]
+            t1 += dfTI[1]        
+        loop1T += time.time() - tic
+
+        tic = time.time()
         for t0 in xrange(dfTI[1], nFrames-tInc, dfTI[1]):
             vm = readHDF5t(rf, t0, t0 + tInc)
             SpkD.Iterate (&vm[0], t0, tInc)
-            t1 += dfTI[1]            
+            t1 += dfTI[1]          
+        loop2T += time.time() - tic
+
+        tic = time.time()
         if t1 < nFrames - tInc + dfTI[1] - 1:
             vm = readHDF5t(rf, t1, nFrames)     
             SpkD.skipLastReverse ((int) (tInc - nFrames + t1))
@@ -73,6 +86,8 @@ def interpDetect(filePath):
 
         vmx = readHDF5t(rf, t1, nFrames)
         SpkD.FinishDetection (&vmx[0], (int)(tInc - nFrames + t1), nFrames - t1)
+        finishT += time.time() - tic
+
     else:
         t1 = nFrames
         tInc = dfTI[2]
@@ -102,6 +117,7 @@ def interpDetect(filePath):
         vmx = readHDF5t(rf, 0, t1)
         SpkD.FinishDetection (&vmx[0], (int)(tInc - t1), t1)
     
-    time = (datetime.now() - sw).microseconds;
-    print 'Elapsed time:', time/1000
-    print 'Milliseconds/frame:', time/nFrames
+    print '# Initialisation time:', initialEstT, 's'
+    print '# Loop 1 time:', loop1T, 's'
+    print '# Loop 2 time:', loop2T, 's'
+    print '# Finish time:', finishT, 's'

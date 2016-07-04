@@ -15,13 +15,13 @@ import os
 cdef extern from "SpkDonline.h" namespace "SpkDonline":
     cdef cppclass Detection:
         Detection() except +
-        void InitDetection(long nFrames, double nSec, int sf, int NCh, long ti, 
+        void InitDetection(long nFrames, double nSec, int sf, int NCh, long tInc, 
                            long int * Indices, unsigned int nCPU)
         void SetInitialParams(int thres, int maa, int ahpthr, int maxsl, int minsl)
         void openSpikeFile(const char * name)
-        void MedianVoltage(unsigned short * vm)
-        void MeanVoltage(unsigned short * vm)
-        void Iterate(unsigned short * vm, long t0)
+        # void MedianVoltage(unsigned short * vm)
+        void MeanVoltage(unsigned short * vm, int tInc)
+        void Iterate(unsigned short * vm, long t0, int tInc)
         void FinishDetection()
 
 
@@ -35,7 +35,7 @@ def detect(filePath):
     nSec = nFrames / samplingRate
 
     # Number of frames to read in one go (fit to the amount of available memory)
-    tInc = nFrames - 1 # max(nFrames, 10000)
+    tInc = min(nFrames, 600000) # Capped at 5 GB of memory approx.
 
     # Overlap across iterations
     tCut = int(0.001*int(samplingRate)) + int(0.001*int(samplingRate)) + 6
@@ -71,19 +71,14 @@ def detect(filePath):
     readT = medianT = iterateT = 0.0; 
     
     # For each chunk of data 
-    for t0 in range(0, nFrames, tInc - tCut):
-        t1 = t0 + tInc 
+    t0 = 0
+    while t0 + tInc <= nFrames:        
+        t1 = t0 + tInc
 
-        if t1 > nFrames: # TODO - The last chunk is potentially smaller. 
-            break
-
-        print 'Iteration', str(1 + t0/(tInc - tCut)) + '/' + str(1 + (nFrames - tInc)/(tInc - tCut)),':'
-        
         # Read data
         print '# Reading', t1-t0, 'frames...'
         tic = time.time()
-
-        # Data is ndexed by time-step: vm[channel + time * NChannels]
+        # Data is indexed by time-step: vm[channel + time * NChannels]
         # must be inverted in order to match the old .brw format.
         vm = readHDF5(rf, t0, t1)
         readT += time.time() - tic
@@ -91,14 +86,18 @@ def detect(filePath):
         # Compute median voltage
         print '# Computing median voltage...'
         tic = time.time()
-        det.MeanVoltage(&vm[0]) #  det.MedianVoltage(&vm[0]) 
+        det.MeanVoltage(&vm[0], tInc) #  det.MedianVoltage(&vm[0]) 
         medianT += time.time() - tic
         
         # Detect spikes
         print '# Detecting spikes...'
         tic = time.time()
-        det.Iterate(&vm[0], t0)
+        det.Iterate(&vm[0], t0, tInc)
         iterateT += time.time() - tic
+
+        t0 += tInc - tCut # Advance across time
+        if t0 < nFrames - tCut: # Last chunk can be smaller
+            tInc = min(tInc, nFrames - t0)    
 
     det.FinishDetection()
 

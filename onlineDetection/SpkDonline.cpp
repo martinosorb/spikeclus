@@ -10,9 +10,8 @@ namespace SpkDonline {
     MinSl(3)     // length considered for determining avg. spike amplitude
     {}
     
-    void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh, long ti, long *Indices, unsigned int nCPU) {
+    void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh, long tInc, long *Indices, unsigned int nCPU) {
         NChannels = NCh;
-        tInc = ti;
         Qd = new int[NChannels];      // noise amplitude
         Qm = new int[NChannels];      // median
         Sl = new int[NChannels];      // counter for spike length
@@ -57,6 +56,7 @@ namespace SpkDonline {
         w.open(name);
     }
     
+    /*
     void Detection::MedianVoltage(unsigned short *vm) {
         for (int t = 0; t < tInc; t++) { 
             for (int i = 0; i < NChannels; i++) { 
@@ -66,8 +66,9 @@ namespace SpkDonline {
             Aglobal[t] = Slice[NChannels / 2];
         }
     }
-    
-    void Detection::MeanVoltageThread(int threadID, unsigned short *vm) {
+    */
+
+    void Detection::MeanVoltageThread(int threadID, unsigned short *vm, int tInc) {
         int chunkSize = std::ceil( (float) tInc/ (float) nthreads);
         int n;
         int Vsum;
@@ -85,16 +86,16 @@ namespace SpkDonline {
         
     }
     
-    void Detection::MeanVoltage(unsigned short *vm) {
+    void Detection::MeanVoltage(unsigned short *vm, int tInc) {
         for (int threadID = 0; threadID < nthreads; threadID++) {
-            threads[threadID] = std::thread( [=] { MeanVoltageThread(threadID, vm); });
+            threads[threadID] = std::thread( [=] { MeanVoltageThread(threadID, vm, tInc); });
         }
         for (int threadID = 0; threadID < nthreads; threadID++) { 
             threads[threadID].join();
         }
     }
     
-    void Detection::IterateThread(int threadID, unsigned short *vm, long t0) {
+    void Detection::IterateThread(int threadID, unsigned short *vm, long t0, int tInc) {
         
         int a; // buffer for Iterate() now is thread dependant
         
@@ -186,10 +187,10 @@ namespace SpkDonline {
         }
     }
     
-    void Detection::Iterate(unsigned short *vm, long t0) {
+    void Detection::Iterate(unsigned short *vm, long t0, int tInc) {
         // SPIKE DETECTION  
         for (int threadID = 0; threadID < nthreads; threadID++) {
-            threads[threadID] = std::thread( [=] { IterateThread(threadID, vm, t0); });
+            threads[threadID] = std::thread( [=] { IterateThread(threadID, vm, t0, tInc); });
         }
         for (int threadID = 0; threadID < nthreads; threadID++) { 
             threads[threadID].join();
