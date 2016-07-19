@@ -19,7 +19,10 @@ def getHDF5params(rf):
     chipVars = rf.require_group('3BRecInfo/3BMeaChip/')
     nRows = chipVars['NRows'].value[0]
     nCols = chipVars['NCols'].value[0]
-    nRecCh = nRows * nCols
+    # nChipCh = nRows * nCols # Total number of channels
+
+    # Get the actual number of channels used in the recording
+    nRecCh = len(rf['3BData/Raw'][0])
 
     # Compute indices
     rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value    
