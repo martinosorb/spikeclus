@@ -3,12 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <thread>
-#include <mutex>
 #include <string>
 
-// Provisional workaround to ease the translation from C# to C++
-#define allocate(V, t, x, y) \
+// Workaround to ease the translation from C# to C++
+#define allocate2D(V, t, x, y) \
     V = new t*[x]; for (int i = 0; i < x; i++) { V[i] = new t[y]; }
 
 namespace SpkDslowFilter {
@@ -52,12 +50,12 @@ class InterpDetection {
 	int tSmth1;
 	int tdSmth;
 	int tdSmth1;
-	const int TauFilt1 = 4;//i.e. 4*2=8 frames
+	static const int TauFilt1 = 4;//i.e. 4*2=8 frames
 	int TauFiltOffset;// = 48;//16 for smooth update (Taufilt=32) and 32 for overlapping, 64 for nonoverlapping. set at runtime.
-	int NFblocks = 3; //average over two, weighted; want ~5 ms take Sampling/5000; set at runtime if >20kHz
-	const int TauFilt=6*TauFilt1;//update timescale of slow offset voltage QmPreD in frames (here using 2*TauFilt1*TauFilt2)
+	int NFblocks; //average over two, weighted; want ~5 ms take Sampling/5000; set at runtime if >20kHz
+	static const int TauFilt=6*TauFilt1;//update timescale of slow offset voltage QmPreD in frames (here using 2*TauFilt1*TauFilt2)
 	int FiltNorm;// = 18; set at runtime
-	const int dtTMx = 3;
+	static const int dtTMx = 3;
 	//global fluctuations
 	int* Aglobal;
 	int* Aglobaldiff;
@@ -89,13 +87,13 @@ class InterpDetection {
 	bool* Sl4x;//tag for removed spikes
 	bool* AHP4;//tag for repolarizing current
 	int* Amp4;//buffers spike amplitude
-	int NSpikes4=0;//to count spikes
+	int NSpikes4;//to count spikes
 	//Variables for the spike detection
 	int* Sl5;//counter for spike length
 	bool* Sl5x;//tag for removed spikes
 	bool* AHP5;//tag for repolarizing current
 	int* Amp5;//buffers spike amplitude
-	int NSpikes5=0;//to count spikes
+	int NSpikes5;//to count spikes
 	//cutouts
 	int CutPre;
 	int CutPost;
@@ -120,32 +118,32 @@ class InterpDetection {
 	int* Lw;
 	int Lmx;
 	//Parameters for variance and mean updates
-	const int Tau_m0 = 4;//timescale for updating Qm (increment is Qd/Tau_m)
-	const int Qdmin=300;//set minimum value of Qd
+	static const int Tau_m0 = 4;//timescale for updating Qm (increment is Qd/Tau_m)
+	static const int Qdmin=300;//set minimum value of Qd
 	//Parameters for spike detection
 	int threshold;// = 6*AmpScale;//threshold to detect spikes >6 is likely to be real spikes; set at runtime
 	int AHPthr;// = 0;//signal should go below that threshold within Slmax-Slmin frames; set at runtime
 	int Slmax;// = 8;//dead time in frames after peak, used for further testing; set at runtime
 	int Sln0;//=2; set at runtime
 	//Parameters for reading data
-	const int tInc = 192;//increment for reading data
-	const int Ascale0 = -192;//factor to multiply to raw traces to increase resolution; definition of ADC counts had been changed!
+	static const int tInc = 192;//increment for reading data
+	static const int Ascale0 = -192;//factor to multiply to raw traces to increase resolution; definition of ADC counts had been changed!
 	int Ascale;
 	int AscaleV;
 	int AscaleG;
-	const int AmpScale=100;//want to use integer amplitudes
+	static const int AmpScale=100;//want to use integer amplitudes
 	//Parameters for recalibration events and artefact handling
-	const int artT =10;//to use after artefacts; to update Qm for 10 frames
+	static const int artT =10;//to use after artefacts; to update Qm for 10 frames
 	int* A;//control parameter for amplifier effects
 	//instead of copying data around, want lookup variables that loop over one dimension of a matrix
 	//2-loop
-	int dt=0;
-	const int dtMx = 2;
-	int dtPre=1;
+	int dt;
+	static const int dtMx = 2;
+	int dtPre;
 	//(dtEMx-1)-loop --> still exists/necessary?
-	int dtE=0;
-	const int dtEMx = 2;
-	int dtEx=dtEMx-1;
+	int dtE;
+	static 	const int dtEMx = 2;
+	int dtEx;
 
 	int ChInd4ListSize;
 	int ChInd5ListSize;
@@ -157,8 +155,8 @@ class InterpDetection {
 	std::ofstream wInfo; //for other stuff
 	std::ofstream wMean; //for avg. Voltage
 
-	int recalibTrigger=1;
-	int Acal=3000;//for recalibration events
+	static const int recalibTrigger=1;
+	int Acal;//for recalibration events
 		
 public:
 	InterpDetection();

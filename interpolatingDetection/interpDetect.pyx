@@ -31,6 +31,10 @@ def interpDetect(filePath):
     # Duration of the recording in seconds
     nSec = nFrames / samplingRate
 
+    print "Number of channels:", nRecCh
+    print "Sampling rate:", samplingRate
+    print "Duration:", nSec
+
     # Allocate indices
     cdef np.ndarray[int, mode = "c"] Indices = np.asarray(chIndices, dtype=ctypes.c_int)
     
@@ -41,17 +45,15 @@ def interpDetect(filePath):
     SpkD.openFiles( str.encode(os.path.splitext(filePath)[0]) );
     
     tInc = dfTI[2]
-
+    
     # Allocate vm and vmx
     cdef np.ndarray[unsigned short, mode = "c"] vm = np.zeros(nRecCh*tInc, dtype=ctypes.c_ushort)
-    cdef np.ndarray[unsigned short, mode = "c"] vmx = np.zeros(nRecCh*tInc, dtype=ctypes.c_ushort)
 
     # Setup timers  
-    initialEstT = loop1T = loop2T = finishT = 0.0; 
+    initialEstT = startT = loopT = finishT = 0.0; 
 
     if dfTI[0] > 0:
         t1 = 0
-        tInc = dfTI[2]
 
         print 'Initial estimations...'
 
@@ -62,21 +64,19 @@ def interpDetect(filePath):
         initialEstT += time.time() - tic
 
         print 'Start detection...'
-
         tic = time.time()
-        for t0 in xrange(0, dfTI[1], dfTI[1]):
-            vm = readHDF5t(rf, t0, t0 + tInc)
-            SpkD.StartDetection (&vm[0], t0, nFrames, nSec, samplingRate, &Indices[0])
-            SpkD.Iterate (&vm[0], t0, tInc)
-            t1 += dfTI[1]        
-        loop1T += time.time() - tic
+        vm = readHDF5t(rf, 0, tInc)
+        SpkD.StartDetection (&vm[0], 0, nFrames, nSec, samplingRate, &Indices[0])
+        SpkD.Iterate (&vm[0], 0, tInc)
+        t1 += dfTI[1]        
+        startT += time.time() - tic
 
         tic = time.time()
         for t0 in xrange(dfTI[1], nFrames-tInc, dfTI[1]):
             vm = readHDF5t(rf, t0, t0 + tInc)
             SpkD.Iterate (&vm[0], t0, tInc)
             t1 += dfTI[1]          
-        loop2T += time.time() - tic
+        loopT += time.time() - tic
 
         tic = time.time()
         if t1 < nFrames - tInc + dfTI[1] - 1:
@@ -84,25 +84,24 @@ def interpDetect(filePath):
             SpkD.skipLastReverse ((int) (tInc - nFrames + t1))
             SpkD.Iterate (&vm[0], t1, nFrames - t1)
 
-        vmx = readHDF5t(rf, t1, nFrames)
-        SpkD.FinishDetection (&vmx[0], (int)(tInc - nFrames + t1), nFrames - t1)
+        vm = readHDF5t(rf, t1, nFrames)
+        SpkD.FinishDetection (&vm[0], (int)(tInc - nFrames + t1), nFrames - t1)
         finishT += time.time() - tic
 
     else:
         t1 = nFrames
-        tInc = dfTI[2]
-        # int tCut = -(sf / 501 + sf / 1000) / df + 6 +8;
-        # int CutOffset = -(sf / 1000) / df + 6;
+        
         print 'Initial estimations...'
+
         for t0 in xrange(nFrames, max(tInc,nFrames-200*dfTI[1]), -dfTI[1]):
             vm = readHDF5t(rf, t0 - tInc, t0)
             SpkD.InitialEstimation (&vm[0], t0 - tInc)
+
         print 'Start detection...'
-        for t0 in xrange(nFrames, nFrames-dfTI[1], -dfTI[1]):
-            vm = readHDF5t(rf, t0 - tInc, t0)
-            SpkD.StartDetection (&vm[0], t0-tInc, nFrames, nSec, samplingRate, &Indices[0])
-            SpkD.Iterate (&vm[0], t0-tInc, tInc)
-            t1 -= dfTI[1]
+        vm = readHDF5t(rf, nFrames - tInc, nFrames)
+        SpkD.StartDetection (&vm[0], nFrames-tInc, nFrames, nSec, samplingRate, &Indices[0])
+        SpkD.Iterate (&vm[0], nFrames-tInc, tInc)
+        t1 -= dfTI[1]
 
         for t0 in xrange (nFrames-dfTI[1], tInc, -dfTI[1]):
             vm = readHDF5t(rf, t0 - tInc, t0)
@@ -114,10 +113,10 @@ def interpDetect(filePath):
             vm = readHDF5t(rf, 0, t1)
             SpkD.Iterate (&vm[0], 0, t1)
             
-        vmx = readHDF5t(rf, 0, t1)
-        SpkD.FinishDetection (&vmx[0], (int)(tInc - t1), t1)
+        vm = readHDF5t(rf, 0, t1)
+        SpkD.FinishDetection (&vm[0], (int)(tInc - t1), t1)
     
     print '# Initialisation time:', initialEstT, 's'
-    print '# Loop 1 time:', loop1T, 's'
-    print '# Loop 2 time:', loop2T, 's'
+    print '# Start time:', startT, 's'
+    print '# Loop time:', loopT, 's'
     print '# Finish time:', finishT, 's'

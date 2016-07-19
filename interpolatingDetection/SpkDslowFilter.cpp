@@ -3,9 +3,19 @@
 namespace SpkDslowFilter {
 
 InterpDetection::InterpDetection() {
+    NFblocks = 3;
+    dt = 0;
+    dtPre = 1;
+    dtEx=dtEMx-1;
+    dtE=0;
+    Acal=3000;
+    NSpikes4 = 0;
+    NSpikes5 = 0;
 }   
 
 int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, double sfd, int NCh, int* Indices) {
+
+    
     dfTI = new int[3];
     Aglobal = new int[tInc];
     Aglobaldiff = new int[tInc];
@@ -17,7 +27,6 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     }
 
     NChannels = NCh;
-    //NFrames = nFrames;
     sfi = sf / 1670;
     FrameDt = (float) (1000.0 / sfd);
     int* SInd = new int[4096];
@@ -166,11 +175,11 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     Qm = new int[NChannels];//median
     QmPre = new int[NChannels];
     QmPreD = new int[NChannels];
-    allocate(Qdiff, int, NChannels, dtMx); // Qdiff = allocate(new int[NChannels][dtMx];
-    allocate(Qmax, int, NChannels, 2); // Qmax = new int[NChannels][2];
+    allocate2D(Qdiff, int, NChannels, dtMx); // Qdiff = allocate2D(new int[NChannels][dtMx];
+    allocate2D(Qmax, int, NChannels, 2); // Qmax = new int[NChannels][2];
     QmaxE = new int[NChannels];
     SqIv = new long[NChannels];//sum of squared channel increments
-    allocate(SIprod, long, NChannels, 13); // SIprod = new long[NChannels][13];//sum of product of global and channel voltage increments
+    allocate2D(SIprod, long, NChannels, 13); // SIprod = new long[NChannels][13];//sum of product of global and channel voltage increments
     //SIp = new int[NChannels];
     Vbias = new int[NChannels];
     FVbias = new int[NChannels];
@@ -189,7 +198,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     AHP5 = new bool[NChannels];//counter for repolarizing current
     Amp5 = new int[NChannels];//buffers spike amplitude
     Slice = new int[NChannels];
-    allocate(Avgs1, int, NChannels, 3); // Avgs1= new int[NChannels][3];
+    allocate2D(Avgs1, int, NChannels, 3); // Avgs1= new int[NChannels][3];
     //sortAvg= new int[NChannels][2];
     //Avgs1b= new int[NChannels][];
     Avgs3= new int[NChannels];
@@ -197,11 +206,11 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     // Parameters    
     float detection_threshold = 6.0;
     float repolarization_threshold = 0.0;
-    // bool recalibration = true; // Not currently used
+    // bool recalibration = true; // ! currently used
     int increment = 1;
     float cutoutPrePeak = 2*sfi*FrameDt; // 1.14
     float cutoutPostPeak = 3*sfi*FrameDt; // 1.71
-    float smoothing_kernel = (sf/5000.0+2.0)*FrameDt; // 0.43
+    float smoothing_kernel = (float) (sf/5000.0+2.0)*FrameDt; // 0.43
     bool measure_autocorrelation = false;
     
     // Set the parameters
@@ -218,7 +227,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
     if (sf / 5000 > 3) {
         NFblocks = sf / 5000;
     }
-    allocate(Avgs2, int, NChannels, NFblocks); // Avgs2 = new int[NChannels][NFblocks];
+    allocate2D(Avgs2, int, NChannels, NFblocks); // Avgs2 = new int[NChannels][NFblocks];
     FiltNorm = 2*(8 * (NFblocks - 1) + 2);
     HF = (sf > 12000);
     if (HF) {
@@ -261,7 +270,7 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
         //CutAfter = 2 -(sf / 1002 + sf/835 + sf / 1000)/df;
         //CutAfterLong = 2 -(sf / 1002 + sf/835 + sf / 1000)/df;
         tCut=-(CutPre + 1 + CutPost) / df;//6 -(sf / 1002 + sf / 1000)/df;
-        tCutLong=-(CutPre + 1 + CutPost) / df;//same as tCut here; long spikes do not make sense
+        tCutLong=-(CutPre + 1 + CutPost) / df;//same as tCut here; long spikes do ! make sense
         //tCutLong0=-(CutPre + 1 + CutPost + sfi) / df;//6 -(sf / 501 + sf / 1000)/df;
         Sln0= -(sf / 2334)/df;
         Sampling = -sf/df;
@@ -372,12 +381,12 @@ int* InterpDetection::SetInitialParams (long nFrames, double nSec, int sf, doubl
 }
       
 void InterpDetection::openFiles(const std::string& name) {
-    w.open(name + "_INT_Spikes.txt"); // For spikes
-    wShapes.open(name + "_INT_Shapes.txt"); // For raw data
-    wX.open(name + "_INT_SpikesX.txt"); // For spikes
-    wShapesX.open(name + "_INT_ShapesX.txt"); // For raw data
-    wInfo.open(name + "_INT_Info.txt"); // For other stuff
-    wMean.open(name + "_INT_Avg.txt"); // For avg. Voltage
+    w.open((name + "_INT_Spikes.txt").c_str()); // For spikes
+    wShapes.open((name + "_INT_Shapes.txt").c_str()); // For raw data
+    wX.open((name + "_INT_SpikesX.txt").c_str()); // For spikes
+    wShapesX.open((name + "_INT_ShapesX.txt").c_str()); // For raw data
+    wInfo.open((name + "_INT_Info.txt").c_str()); // For other stuff
+    wMean.open((name + "_INT_Avg.txt").c_str()); // For avg. Voltage
 }
        
 void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int tInc) { //want to compute an approximate 33 percentile
@@ -414,7 +423,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
             for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
                 Plowx = 2*vm[i*tInc + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];//factor of 3!
                 if (Plowx < P1) {
-                    if (not Px) {
+                    if (! Px) {
                         Px = true;
                         Plow = Plowx;
                     } else {
@@ -423,7 +432,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     }
                 }
             }
-            if (not Px) {//P1 was the lowest value
+            if (! Px) {//P1 was the lowest value
                 P1 = Plowx;
                 for (int tt=TauFilt1-2; tt>0; tt--) {
                     Plowx = 2*vm[i*tInc + t + tt * df]-Aglobal[(t+tt*df)/dfAbs];
@@ -453,7 +462,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 for (int tt=0; tt<3; tt++) {//this function wastes most of the time
                     Plowx = Avgs1[i][tt];
                     if (Plowx < P2) {
-                        if (not Px) {
+                        if (! Px) {
                             Px = true;
                             Plow = Plowx;
                         } else {
@@ -462,7 +471,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                         }
                     }
                 }
-                if (not Px) {//P1 was the lowest value
+                if (! Px) {//P1 was the lowest value
                     P2 = Plowx;
                     for (int tt=2; tt>=0; tt--) {
                         Plowx = Avgs1[i][tt];
@@ -472,10 +481,10 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     }
                 }
                 Avgs2[i][klast] = P2;
-                if (not HF) {
+                if (! HF) {
                     Avgs1[i][2] = 2*P1;
                 }
-                //to avoid accumulating numerical errors (not sure whether necessary)
+                //to avoid accumulating numerical errors (! sure whether necessary)
                 if (NFblocks == 3) {
                     Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale/ FiltNorm;
                 } else {
@@ -516,7 +525,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
                     Plowx = 2*(vm[i*tInc + t + 2 * tt] + vm[i*tInc + t + 2 * tt + 1])-Aglobal[t+2*tt]-Aglobal[t+2*tt+1];
                     if (Plowx < P1) {
-                        if (not Px) {
+                        if (! Px) {
                             Px = true;
                             Plow = Plowx;
                         } else {
@@ -556,7 +565,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     for (int tt=0; tt<3; tt++) {//this function wastes most of the time
                         Plowx = Avgs1[i][tt];
                         if (Plowx < P2) {
-                            if (not Px) {
+                            if (! Px) {
                                 Px = true;
                                 Plow = Plowx;
                             } else {
@@ -565,7 +574,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                             }
                         }
                     }
-                    if (not Px) {//P1 was the lowest value
+                    if (! Px) {//P1 was the lowest value
                         P2 = Plowx;
                         for (int tt=1; tt>=0; tt--) {
                             Plowx = Avgs1[i][tt];
@@ -575,10 +584,10 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                         }
                     }
                     Avgs2[i][klast] = P2;//klast will be knext after one iteration
-                    if (not HF) {
+                    if (! HF) {
                         Avgs1[i][2] = P1;
                     }
-                    //to avoid accumulating numerical errors (not sure whether necessary)
+                    //to avoid accumulating numerical errors (! sure whether necessary)
                     if (NFblocks == 3) {
                         Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale / FiltNorm;
                     } else {
@@ -618,7 +627,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                 for (int tt=1; tt<TauFilt1; tt++) {//this function wastes most of the time
                     Plowx = 2*(vm[i*tInc + t - 2 * tt] + vm[i*tInc + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
                     if (Plowx < P1) {
-                        if (not Px) {
+                        if (! Px) {
                             Px = true;
                             Plow = Plowx;
                         } else {
@@ -627,7 +636,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                         }
                     }
                 }
-                if (not Px) {//P1 was the lowest value
+                if (! Px) {//P1 was the lowest value
                     P1 = Plowx;
                     for (int tt=TauFilt1-2; tt>0; tt--) {
                         Plowx = 2*(vm[i*tInc + t - 2 * tt] + vm[i*tInc + t - 2 * tt - 1])-Aglobal[t-2*tt]-Aglobal[t-2*tt-1];
@@ -658,7 +667,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                     for (int tt=0; tt<3; tt++) {//this function wastes most of the time
                         Plowx = Avgs1[i][tt];
                         if (Plowx < P2) {
-                            if (not Px) {
+                            if (! Px) {
                                 Px = true;
                                 Plow = Plowx;
                             } else {
@@ -667,7 +676,7 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                             }
                         }
                     }
-                    if (not Px) {//P1 was the lowest value
+                    if (! Px) {//P1 was the lowest value
                         P2 = Plowx;
                         for (int tt=1; tt>=0; tt--) {
                             Plowx = Avgs1[i][tt];
@@ -677,10 +686,10 @@ void InterpDetection::AvgVoltageDefault(unsigned short* vm, long t0, int t, int 
                         }
                     }
                     Avgs2[i][klast] = P2;//klast will be knext after one iteration
-                    if (not HF) {
+                    if (! HF) {
                         Avgs1[i][2] = P1;
                     }
-                    //to avoid accumulating numerical errors (not sure whether necessary)
+                    //to avoid accumulating numerical errors (! sure whether necessary)
                     if (NFblocks == 3) {
                         Avgs3[i] = (P2 + 4 * (Avgs2[i][knext] + Avgs2[i][k])) * Ascale / FiltNorm;
                     } else {
@@ -876,7 +885,7 @@ void InterpDetection::InitialEstimation(unsigned short* vm, long t0) { //use thi
 }
 
 void InterpDetection::StartDetection(unsigned short* vm, long t0, long nFrames, double nSec, double sfd, int* Indices) {
-    /** Not necessary
+    /** ! necessary
     w.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wShapes.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
     wX.BaseStream.Seek(0, SeekOrigin.Begin);   // Set the file pointer to the start.
@@ -1105,7 +1114,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
         //SqIglobal+=Aglobaldiff[tA]*Aglobaldiff[tA];
         wMean << Aglobal[tA] << "\n";
         // RECALIBRATION EVENTS
-        if (recalibTrigger==0){
+        if (recalibTrigger==0){ 
             if (vm[t]<2500) {//write spikes after each recalibration event_newfiles:<2500_oldfiles:<1500
                 if (Acal > 2000) {
                     wInfo << (t+t0)/dfAbs;//write time of recalibration event
@@ -1309,7 +1318,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 if ((Sl4[i]==Slmax) & (!Sl4x[i])) {// & (AHP4[i]<(Slmax-Slmin))
                     if (AHP4[i]) {
                         wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
-                        NSpikes4++;//to count spikes
+                        NSpikes4 += 1;//to count spikes
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd4a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
@@ -1385,7 +1394,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                     }
                     else {
                         wX << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp4[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
-                        NSpikes4++;//to count spikes
+                        NSpikes4 += 1;//to count spikes
                         for (int subChIndex = 0; subChIndex < 4; subChIndex++){
                             int ch = ChInd4a[i][subChIndex];
                             for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
@@ -1542,7 +1551,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 } else if (a4 < threshold -2*AmpScale) {
                     Z4next[i] = dtTMx;
                 }
-                //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
+                //check for previous threshold crossing (! sure whether necessary here, but wouldn't happen often)
                 else {
                     ChS4Min = 0;
                     a4 = 0;
@@ -1624,7 +1633,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 if ((Sl5[i]==Slmax) & (!Sl5x[i])) {
                     if (AHP5[i]) {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 1 << " " << Acal-Slmax+1 << "\n";
-                        NSpikes5++;//to count spikes
+                        NSpikes5 += 1;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCut+t/dfAbs-CutOffset; jj++) {
                             tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
@@ -1727,7 +1736,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                     }
                     else {
                         w << i << " " << (t0+t)/dfAbs-dfSign*(Slmax-1) << " " << Amp5[i] << " " << 0 << " " << Acal-Slmax+1 << "\n";
-                        NSpikes5++;//to count spikes
+                        NSpikes5 += 1;//to count spikes
                         for (int jj=t/dfAbs-CutOffset; jj<tCutLong+t/dfAbs-CutOffset; jj++) {
                             tShape[jj+CutOffset-t/dfAbs] = vm[ChInd5[i]*tInc + jj*dfAbs]*2 -Aglobal[jj] -FVbias[ChInd5[i]]*Aglobaldiff[jj]/Sampling;
                         }
@@ -1904,7 +1913,7 @@ void InterpDetection::Iterate(unsigned short* vm, long t0, int tInc) {
                 } else if (a5 < threshold -2*AmpScale) {
                     Z5next[i] = dtTMx;
                 }
-                //check for previous threshold crossing (not sure whether necessary here, but wouldn't happen often)
+                //check for previous threshold crossing (! sure whether necessary here, but wouldn't happen often)
                 else {
                     ChS5Min = Qmax[ChInd5a[i][0]][dtPre] / Qd[ChInd5a[i][0]];
                     a5 = 0;
