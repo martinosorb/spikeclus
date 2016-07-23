@@ -36,11 +36,4 @@ def getHDF5params(rf):
 def readHDF5(rf, t0, t1):
     ''' In order to use the algorithms designed for the old format, 
     the input data must be inverted.'''
-    return 4095 - rf['3BData/Raw'][t0:t1].flatten() 
-
-def readHDF5t(rf, t0, t1):
-    ''' Transposed version for the interpolation method. '''
-    if t0 <= t1:
-        return 4095 - rf['3BData/Raw'][t0:t1].flatten('F')
-    else: # Reversed read
-        return 4095 - rf['3BData/Raw'][t1:t0].flatten('F') 
+    return 4095 - rf['3BData/Raw'][t0:t1].flatten()
