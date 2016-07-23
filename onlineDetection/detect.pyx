@@ -12,6 +12,12 @@ import time
 import multiprocessing
 import os
 
+class bcolors: # Only for unix progress output
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+
 cdef extern from "SpkDonline.h" namespace "SpkDonline":
     cdef cppclass Detection:
         Detection() except +
@@ -25,8 +31,8 @@ cdef extern from "SpkDonline.h" namespace "SpkDonline":
         void FinishDetection()
 
 
-def detect(filePath):
- 
+def detect(filePath, Threshold = None, MinAvgAmp = None, AHPthr = None, MaxSl = None, MinSl = None):
+
     # Read data from a .brw (HDF5) file
     rf = openHDF5file(filePath)
     nFrames, samplingRate, nRecCh, chIndices = getHDF5params(rf)
@@ -35,7 +41,7 @@ def detect(filePath):
     nSec = nFrames / samplingRate
 
     # Number of frames to read in one go (fit to the amount of available memory)
-    tInc = min(nFrames, 600000) # Capped at 5 GB of memory approx.
+    tInc = min(nFrames, 50000) # Capped at 5 GB of memory approx.
 
     # Overlap across iterations
     tCut = int(0.001*int(samplingRate)) + int(0.001*int(samplingRate)) + 6
@@ -59,12 +65,27 @@ def detect(filePath):
     det.InitDetection(nFrames, nSec, int(samplingRate), nRecCh, tInc, &Indices[0], nCPU)
 
     # Set the parameters: int thres, int maa, int ahpthr, int maxsl,  int minsl
-    MaxSl = int(samplingRate * 1 / 1000 + 0.5) + 1 # compute as in C# program
-    MinSl = int(samplingRate * 0.3 / 1000 + 0.5)
-    det.SetInitialParams(9, 5, 0, MaxSl, MinSl)
+
+    # Threshold to detect spikes >11 is likely to be real spikes, but can and should be sorted afterwards
+    if not Threshold: 
+        Threshold = 9
+    # Signal should go below that threshold within MaxSl-Slmin frames
+    if not MinAvgAmp:
+        MinAvgAmp = 5
+    # Minimal avg. amplitude of peak (in units of Qd)
+    if not AHPthr:
+        AHPthr = 0
+    # Dead time in frames after peak, used for further testing
+    if not MaxSl:
+        MaxSl = int(samplingRate * 1 / 1000 + 0.5)
+    # Length considered for determining avg. spike amplitude
+    if not MinSl:
+        MinSl = int(samplingRate * 0.3 / 1000 + 0.5)
+
+    det.SetInitialParams(Threshold, MinAvgAmp, AHPthr, MaxSl, MinSl)
     
     # Open output file
-    spikefilename = str.encode(os.path.splitext(filePath)[0] + "_Spikes.txt")
+    spikefilename = str.encode(os.path.splitext(filePath)[0] + "_SpikesSYCL.txt")
     det.openSpikeFile(spikefilename)
 
     # Setup timers  
@@ -72,8 +93,12 @@ def detect(filePath):
     
     # For each chunk of data 
     t0 = 0
-    while t0 + tInc <= nFrames:        
+    while t0 + tInc <= nFrames:
         t1 = t0 + tInc
+
+        # Display progress bar (unix only)
+        if os.name == 'posix': 
+            displayProgress(t0, t1, nFrames)      
 
         # Read data
         print '# Reading', t1-t0, 'frames...'
@@ -92,7 +117,7 @@ def detect(filePath):
         # Detect spikes
         print '# Detecting spikes...'
         tic = time.time()
-        det.Iterate(&vm[0], t0, tInc)
+        det.Iterate(&vm[0], t0, tInc) # or IterateSYCL
         iterateT += time.time() - tic
 
         t0 += tInc - tCut # Advance across time
@@ -101,9 +126,21 @@ def detect(filePath):
 
     det.FinishDetection()
 
+    # Display progress bar (unix only)
+    if os.name == 'posix': 
+        displayProgress(t0, t1, nFrames)    
+
     totalT = readT + medianT + iterateT
     print '# Elapsed time:', totalT, 's'
     print '# (Reading:', readT ,'s)'
     print '# (Median:', medianT,'s)'
     print '# (Detecting:', iterateT,'s)'
     print '# (Per frame:', 1000*totalT/nFrames, 'ms)'
+
+def displayProgress(t0, t1, nFrames):
+    os.system('clear')
+    col = int(os.popen('stty size', 'r').read().split()[1])
+    g = np.divide(t0*col, nFrames)
+    b = np.divide((t1-t0)*col, nFrames)
+    k = col - g - b
+    print bcolors.GREEN + '█'*g + bcolors.BLUE +  '█'*b+ bcolors.ENDC +  '█'*k + '\n'

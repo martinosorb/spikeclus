@@ -8,7 +8,7 @@ long_descr = """`See
 
 setup(
     version='1.0',
-    author='Oliver Muthmann, Matthias H Hennig',
+    author='Oliver Muthmann, Matthias H Hennig, Albert Puente Encinas',
     license='GPL3',
     description='Efficient spike detection for extracellular recordings.',
     long_description=long_descr,
@@ -17,7 +17,7 @@ setup(
            "detect",
            sources=["detect.pyx", "SpkDonline.cpp"],
            language="c++",
-           extra_compile_args=['-std=c++11'],
+           extra_compile_args=['-std=c++11', '-O3'],
            )),
     include_dirs=[numpy.get_include()], requires=['h5py']
 )

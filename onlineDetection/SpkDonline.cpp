@@ -1,14 +1,10 @@
 #include "SpkDonline.h"
 
-namespace SpkDonline {
-    Detection::Detection() :
-    // Set default parameters
-    threshold(9), // threshold to detect spikes >11 is likely to be real spikes, but can and should be sorted afterwards
-    AHPthr(0),    // signal should go below that threshold within MaxSl-Slmin frames
-    MaxSl(8),     // dead time in frames after peak, used for further testing
-    MinAvgAmp(5), // minimal avg. amplitude of peak (in units of Qd)
-    MinSl(3)     // length considered for determining avg. spike amplitude
-    {}
+namespace SpkDonline { 
+    
+    Detection::Detection() {
+        // Empty constructor
+    }
     
     void Detection::InitDetection(long nFrames, double nSec, int sf, int NCh, long tInc, long *Indices, unsigned int nCPU) {
         NChannels = NCh;
@@ -21,11 +17,11 @@ namespace SpkDonline {
         A = new int[NChannels];       // control parameter for amplifier effects
         ChInd = new int[NChannels];
         Slice = new int[NChannels];
-        MaxSl = sf / 1000 + 1;
-        MinSl = sf / 3000 + 2;
+        // MaxSl = sf / 1000 + 1; 
+        // MinSl = sf / 3000 + 2;
         Sampling = sf;
         Aglobal = new int[tInc];
-        for (int i = 0; i < tInc; i++)
+        for (int i = 0; i < tInc; i++) 
             Aglobal[i] = 0;
         for (int i = 0; i < NChannels; i++) {
             Qd[i] = 400;
@@ -94,6 +90,7 @@ namespace SpkDonline {
             threads[threadID].join();
         }
     }
+
     
     void Detection::IterateThread(int threadID, unsigned short *vm, long t0, int tInc) {
         
@@ -196,7 +193,7 @@ namespace SpkDonline {
             threads[threadID].join();
         }
     }
-    
+      
     void Detection::FinishDetection() {
         w.close();
     }

@@ -19,7 +19,10 @@ def getHDF5params(rf):
     chipVars = rf.require_group('3BRecInfo/3BMeaChip/')
     nRows = chipVars['NRows'].value[0]
     nCols = chipVars['NCols'].value[0]
-    nRecCh = nRows * nCols
+    # nChipCh = nRows * nCols # Total number of channels
+
+    # Get the actual number of channels used in the recording
+    nRecCh = len(rf['3BData/Raw'][0])
 
     # Compute indices
     rawIndices = rf['3BRecInfo/3BMeaStreams/Raw/Chs'].value    
@@ -34,3 +37,10 @@ def readHDF5(rf, t0, t1):
     ''' In order to use the algorithms designed for the old format, 
     the input data must be inverted.'''
     return 4095 - rf['3BData/Raw'][t0:t1].flatten() 
+
+def readHDF5t(rf, t0, t1):
+    ''' Transposed version for the interpolation method. '''
+    if t0 <= t1:
+        return 4095 - rf['3BData/Raw'][t0:t1].flatten('F')
+    else: # Reversed read
+        return 4095 - rf['3BData/Raw'][t1:t0].flatten('F') 
