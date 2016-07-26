@@ -3,6 +3,10 @@ Herding Spikes
 
 Software for high density electrophysiology.
 
+development branch
+------------------
+Experimental changes will first appear here. Bound to be unstable...
+
 ## Sub-projects
 
  - [onlineDetection](onlineDetection): Online-capable spike detection, done independently on each recording channel.
