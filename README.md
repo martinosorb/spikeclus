@@ -3,6 +3,10 @@ Herding Spikes
 
 Software for high density electrophysiology.
 
+vistool branch
+--------------
+This branch has beta code of the [visualisation tool](visualisationtool).
+
 ![Spikes](pictures/spikes.png)
 
 # Contents
