@@ -1,3 +1,6 @@
+Branch with obsolete/old code
+=============================
+
 # Herding Spikes
 Software for high density multi-electrode array recordings.
 
