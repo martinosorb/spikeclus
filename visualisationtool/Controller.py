@@ -16,6 +16,11 @@ from numpy.linalg import norm
 from scipy.spatial import ConvexHull
 from matplotlib.patches import Polygon, Ellipse, CirclePolygon #, Circle
 from matplotlib.collections import PatchCollection
+import os
+import sys
+CLUSTERING_PATH = os.getcwd() + '/../clustering'
+sys.path.insert(0, CLUSTERING_PATH)
+from herdingspikes import spikeclass, ImportInterpolated
 
 
 class ActionController():
@@ -124,21 +129,33 @@ class ActionController():
 
         self.db = DataBase()
 
-        self.db.setupDatabase(spikeFile)
-        self.times = self.db.getTimes()
-        self.centres = self.db.getCentres()
-        self.clusterID = self.db.getClusterID()
-        self.data = self.db.getData()
-        self.sampling = self.db.getSampling()
-        self.shapes = self.db.getShapes()
-        self.nClusters = np.shape(self.centres)[1]
+        clustered = self.db.setupDatabase(spikeFile)
+        if clustered == "false":
+            return "false"
+        else:
+            self.times = self.db.getTimes()
+            self.centres = self.db.getCentres()
+            self.clusterID = self.db.getClusterID()
+            self.data = self.db.getData()
+            self.sampling = self.db.getSampling()
+            self.shapes = self.db.getShapes()
+            self.nClusters = np.shape(self.centres)[1]
 
-        self.setColours()
+            self.setColours()
 
-        self.setTimeHistogram()
+            self.setTimeHistogram()
 
-        self.mw.confWaveFormWidget()
+            self.mw.confWaveFormWidget()
 
+    def runCluster(self, spikeFile, h=0.3, alpha=0.28):
+        Folder, Filename = os.path.split(spikeFile)
+        O = ImportInterpolated(spikeFile) 
+        scorePCA = O.ShapePCA(ncomp=2, white=True)
+        O.CombinedMeanShift(h, alpha, PrincComp=scorePCA, mbf=10)
+        result = 'Found ' + str(O.NClusters()) + ' clusters for ' + str(O.NData()) + ' spikes.'
+        fileName = Folder + '/' + Filename.replace('.hdf5', '_clustered_' + str(h) + '_' + str(alpha) + '.hdf5')
+        O.Save(fileName)
+        return result, fileName
 
     def setColours(self):
         np.random.seed(1)

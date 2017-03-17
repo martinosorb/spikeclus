@@ -13,6 +13,7 @@ from DialogConf import Dialog
 #import scipy.special._ufuncs_cxx
 import time
 import matplotlib as mpl
+import os
 
 #_fromUtf8 = QtCore.QString.fromUtf8
 
@@ -87,6 +88,7 @@ class MainWindow(QtGui.QMainWindow):
         #Add listeners to all buttons
         QtCore.QObject.connect(self.ui.open_raw, QtCore.SIGNAL('clicked()'), self.select_file_raw)
         QtCore.QObject.connect(self.ui.push_plot, QtCore.SIGNAL('clicked()'), self.openfileraw)
+        QtCore.QObject.connect(self.ui.run_cluster, QtCore.SIGNAL('clicked()'), self.run_cluster)
         QtCore.QObject.connect(self.ui.checkbutt, QtCore.SIGNAL('clicked()'), self.checkClusters)
         QtCore.QObject.connect(self.ui.uncheckbutt, QtCore.SIGNAL('clicked()'), self.uncheckClusters)
         QtCore.QObject.connect(self.ui.pushButton_2, QtCore.SIGNAL('clicked()'), self.filterTime)
@@ -867,20 +869,28 @@ class MainWindow(QtGui.QMainWindow):
 
         try:
             if self.spikefile != "":
-                self.ct.loadData(str(self.spikefile))
-                self.ui.line_start.setDisabled(False)
-                self.ui.line_end.setDisabled(False)
-                self.ui.pushButton_2.setDisabled(False)
-                self.ui.pushButton_10.setDisabled(False)
-                self.printLog("Data file has been loaded correctly")
+                clustered = self.ct.loadData(str(self.spikefile))
+                if clustered == "false":
+                    self.printLog("Try press the Cluster button")
+                else:
+                    self.ui.line_start.setDisabled(False)
+                    self.ui.line_end.setDisabled(False)
+                    self.ui.pushButton_2.setDisabled(False)
+                    self.ui.pushButton_10.setDisabled(False)
+                    self.printLog("Data file has been loaded correctly")
             else:
                 self.printLog("An .hdf5 file must be provided using the Open File dialog.")
         except ValueError:
             self.printLog(str(ValueError.message))
 
-
-
-
+    def run_cluster(self):
+        self.printLog("Clustering")
+        result, fileName = self.ct.runCluster(str(self.spikefile))
+        if result and fileName: 
+            self.spikefile = fileName
+            self.printLog(result)
+        else:
+            self.printLog("Cluster unsuccessful")
 
     def uncheckClusters(self):
         self.ct.uncheckClusters(self.ct.getFilteredRows())
