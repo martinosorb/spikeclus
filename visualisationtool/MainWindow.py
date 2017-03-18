@@ -471,9 +471,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ct.printPCAClusters()
 
 
-
-
-
     def getTimeStart(self):
         return self.timestart
 
@@ -884,9 +881,10 @@ class MainWindow(QtGui.QMainWindow):
             self.printLog(str(ValueError.message))
 
     def run_cluster(self):
-        self.printLog("Clustering")
-        result, fileName = self.ct.runCluster(str(self.spikefile))
-        if result and fileName: 
+        self.h = float(self.ui.line_h.text())
+        self.alpha = float(self.ui.line_alpha.text())
+        result, fileName = self.ct.runCluster(str(self.spikefile), self.h, self.alpha)
+        if result and fileName:
             self.spikefile = fileName
             self.printLog(result)
         else:
