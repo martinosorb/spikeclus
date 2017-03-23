@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(998,771)
+        MainWindow.resize(1000,800)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.centralwidget)
@@ -54,7 +54,7 @@ class Ui_MainWindow(object):
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.gridLayout_2.addWidget(self.label_4, 0, 0, 1, 1)
         self.line_raw = QtGui.QLineEdit(self.groupBox_4)
-        self.line_raw.setMinimumSize(QtCore.QSize(180, 0))
+        self.line_raw.setMinimumSize(QtCore.QSize(170, 0))
         self.line_raw.setObjectName(_fromUtf8("line_raw"))
         self.gridLayout_2.addWidget(self.line_raw, 0, 1, 1, 2)
         self.open_raw = QtGui.QPushButton(self.groupBox_4)
@@ -65,7 +65,7 @@ class Ui_MainWindow(object):
         self.open_raw.setSizePolicy(sizePolicy)
         self.open_raw.setMaximumSize(QtCore.QSize(30, 30))
         self.open_raw.setObjectName(_fromUtf8("open_raw"))
-        self.gridLayout_2.addWidget(self.open_raw, 0, 3, 1, 1)
+        self.gridLayout_2.addWidget(self.open_raw, 0, 4, 1, 1)
         self.push_plot = QtGui.QPushButton(self.groupBox_4)
         self.push_plot.setObjectName(_fromUtf8("push_plot"))
         self.gridLayout_2.addWidget(self.push_plot, 2, 2, 1, 2)
