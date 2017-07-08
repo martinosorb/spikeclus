@@ -16,6 +16,11 @@ from numpy.linalg import norm
 from scipy.spatial import ConvexHull
 from matplotlib.patches import Polygon, Ellipse, CirclePolygon #, Circle
 from matplotlib.collections import PatchCollection
+import os
+import sys
+CLUSTERING_PATH = os.getcwd() + '/../clustering'
+sys.path.insert(0, CLUSTERING_PATH)
+from herdingspikes import spikeclass, ImportInterpolated
 
 
 class ActionController():
@@ -120,25 +125,58 @@ class ActionController():
 
 
 
-    def loadData(self, spikeFile):
+    def loadData(self, SpikeFile):
 
         self.db = DataBase()
 
-        self.db.setupDatabase(spikeFile)
-        self.times = self.db.getTimes()
-        self.centres = self.db.getCentres()
-        self.clusterID = self.db.getClusterID()
-        self.data = self.db.getData()
-        self.sampling = self.db.getSampling()
-        self.shapes = self.db.getShapes()
-        self.nClusters = np.shape(self.centres)[1]
+        clustered = self.db.setupDatabase(SpikeFile)
 
-        self.setColours()
+        if clustered == 'clustered':
+            self.times = self.db.getTimes()
+            self.centres = self.db.getCentres()
+            self.clusterID = self.db.getClusterID()
+            self.data = self.db.getData()
+            self.sampling = self.db.getSampling()
+            self.shapes = self.db.getShapes()
+            self.nClusters = np.shape(self.centres)[1]
 
-        self.setTimeHistogram()
+            self.setColours()
 
-        self.mw.confWaveFormWidget()
+            self.setTimeHistogram()
 
+            self.mw.confWaveFormWidget()
+            return "clustered"
+
+        elif clustered == 'unclustered':
+            self.times = self.db.getTimes()
+            self.data = self.db.getData()
+            self.sampling = self.db.getSampling()
+            self.shapes = self.db.getShapes()
+            return "unclustered"
+
+        else:
+            return "false"
+
+    def runCluster(self, h=0.3, alpha=0.28, mbf=10):
+        # Folder, Filename = os.path.split(spikeFile)
+        # O = ImportInterpolated(spikeFile)
+        # scorePCA = O.ShapePCA(ncomp=2, white=True)
+        # O.CombinedMeanShift(h, alpha, PrincComp=scorePCA, mbf=10)
+        # result = 'Found ' + str(O.NClusters()) + ' clusters for ' + str(O.NData()) + ' spikes.'
+        # fileName = Folder + '/' + Filename.replace('.hdf5', '_clustered_' + str(h) + '_' + str(alpha) + '.hdf5')
+        # O.Save(fileName)
+        # return result, fileName
+
+        A = spikeclass(self.data)
+        A.LoadTimes(self.times)
+        A.SetSampling(self.sampling)
+        A.LoadShapes(self.shapes)
+        scorePCA = A.ShapePCA(ncomp=2, white=True)
+        A.CombinedMeanShift(h=h, alpha=alpha, PrincComp=scorePCA, njobs=-2, mbf=mbf)
+        self.clusterID = A.ClusterID()
+        self.centres = A.ClusterLoc()
+        result = 'Found ' + str(A.NClusters()) + ' clusters for ' + str(A.NData()) + ' spikes.'
+        return result
 
     def setColours(self):
         np.random.seed(1)
@@ -272,9 +310,9 @@ class ActionController():
         xtickl = np.arange(int(np.floor(mints)),int(np.ceil(maxts))+1,step2)
         strings = ["%.1f" % number for number in xtickl]
 
-        self.mw.setAxisTimeWidget(mint, maxt, minb, maxb+50)
-        self.mw.setTicksTimeWidget(xticks = xticks, xlabels= strings, yticks = yticks)
-        self.mw.plotTimeWidget(tb[1:]-tbs/2,self.nbins)
+        # self.mw.setAxisTimeWidget(mint, maxt, minb, maxb+50)
+        # self.mw.setTicksTimeWidget(xticks = xticks, xlabels= strings, yticks = yticks)
+        # self.mw.plotTimeWidget(tb[1:]-tbs/2,self.nbins)
 
     def printClusterSpikes(self, clindex):
 

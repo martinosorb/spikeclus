@@ -26,14 +26,24 @@ if StrictVersion(skvers) < StrictVersion('0.17'):
 def ImportInterpolated(filename, shapesrange=None):
     """Helper function to read spike data from an hdf5 file."""
     g = h5py.File(filename, 'r')
-    A = spikeclass(np.array(g['Locations'].value, dtype=float).T)
-    A.LoadTimes(np.floor(g['Times'].value).astype(int))
-    A.SetSampling(g['Sampling'].value)
-    if shapesrange is None:
-        A.LoadShapes(np.array(g['Shapes'].value).T)
+    if 'Locations' in g.keys():
+        A = spikeclass(np.array(g['Locations'].value, dtype=float).T)
+        A.LoadTimes(np.floor(g['Times'].value).astype(int))
+        A.SetSampling(g['Sampling'].value)
+        if shapesrange is None:
+            A.LoadShapes(np.array(g['Shapes'].value).T)
+        else:
+            A.LoadShapes(
+                np.array(g['Shapes'].value).T[shapesrange[0]:shapesrange[1]])
     else:
-        A.LoadShapes(
-            np.array(g['Shapes'].value).T[shapesrange[0]:shapesrange[1]])
+        A = spikeclass(np.array(g['data'].value, dtype=float))
+        A.LoadTimes(np.floor(g['times'].value).astype(int))
+        A.SetSampling(g['Sampling'].value)
+        if shapesrange is None:
+            A.LoadShapes(np.array(g['shapes'].value))
+        else:
+            A.LoadShapes(
+                np.array(g['shapes'].value)[shapesrange[0]:shapesrange[1]])
     g.close()
     A._spikeclass__expinds = np.array([0])
     return A
