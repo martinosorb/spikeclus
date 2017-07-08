@@ -1,6 +1,6 @@
 import PyQt4
 from PyQt4.QtCore import QThread
-from WindowDesign import *
+from WindowDesign_v3 import *
 from FlagConfiguration import *
 from mplwidget import *
 import numpy as np
@@ -61,7 +61,7 @@ class MainWindow(QtGui.QMainWindow):
         self.visiblePCA = True
 
         self.spikefile = ""
-        self.newSpikefile = ""
+        # self.newSpikefile = ""
         self.lineth = None
         self.colorspike = 'red'
         self.colorpoint = 'blue'
@@ -85,26 +85,30 @@ class MainWindow(QtGui.QMainWindow):
         self.enableClusterControls(False)
         self.enablePCAControls(False)
 
+        self.ui.groupBox_15.setVisible(False)
+
 
         #Add listeners to all buttons
         QtCore.QObject.connect(self.ui.open_raw, QtCore.SIGNAL('clicked()'), self.select_file_raw)
-        QtCore.QObject.connect(self.ui.push_plot, QtCore.SIGNAL('clicked()'), self.openfileraw)
-        QtCore.QObject.connect(self.ui.run_cluster, QtCore.SIGNAL('clicked()'), self.run_cluster)
+        # QtCore.QObject.connect(self.ui.push_plot, QtCore.SIGNAL('clicked()'), self.openfileraw)
+        QtCore.QObject.connect(self.ui.pushButton_31, QtCore.SIGNAL('clicked()'), self.run_cluster)
         QtCore.QObject.connect(self.ui.checkbutt, QtCore.SIGNAL('clicked()'), self.checkClusters)
         QtCore.QObject.connect(self.ui.uncheckbutt, QtCore.SIGNAL('clicked()'), self.uncheckClusters)
-        QtCore.QObject.connect(self.ui.pushButton_2, QtCore.SIGNAL('clicked()'), self.filterTime)
+        QtCore.QObject.connect(self.ui.pushButton_29, QtCore.SIGNAL('clicked()'), self.filterTime)
         QtCore.QObject.connect(self.ui.pushButton_6, QtCore.SIGNAL('clicked()'), self.ct.goafterwards)
         QtCore.QObject.connect(self.ui.pushButton_5, QtCore.SIGNAL('clicked()'), self.ct.gobackwards)
 
         QtCore.QObject.connect(self.ui.pushButton_7, QtCore.SIGNAL('clicked()'), self.printPCA)
-        QtCore.QObject.connect(self.ui.pushButton_3, QtCore.SIGNAL('clicked()'), self.flagClusters)
-        QtCore.QObject.connect(self.ui.pushButton_11, QtCore.SIGNAL('clicked()'), self.unflagClusters)
+        QtCore.QObject.connect(self.ui.pushButton_24, QtCore.SIGNAL('clicked()'), self.flagClusters)
+        QtCore.QObject.connect(self.ui.pushButton_25, QtCore.SIGNAL('clicked()'), self.unflagClusters)
         QtCore.QObject.connect(self.ui.pushButton, QtCore.SIGNAL('clicked()'), self.changecolor)
         QtCore.QObject.connect(self.ui.pushButton_4, QtCore.SIGNAL('clicked()'), self.hidewindow)
-        QtCore.QObject.connect(self.ui.pushButton_8, QtCore.SIGNAL('clicked()'), self.showconfwindow)
-        QtCore.QObject.connect(self.ui.pushButton_10, QtCore.SIGNAL('clicked()'), self.alltime)
-        QtCore.QObject.connect(self.ui.pushButton_9, QtCore.SIGNAL('clicked()'), self.saveFlagged)
-        QtCore.QObject.connect(self.ui.pushButton_12, QtCore.SIGNAL('clicked()'), self.zoomcluster)
+        QtCore.QObject.connect(self.ui.pushButton_27, QtCore.SIGNAL('clicked()'), self.showconfwindow)
+        # QtCore.QObject.connect(self.ui.pushButton_10, QtCore.SIGNAL('clicked()'), self.alltime)
+        QtCore.QObject.connect(self.ui.pushButton_28, QtCore.SIGNAL('clicked()'), self.saveFlagged)
+        QtCore.QObject.connect(self.ui.pushButton_26, QtCore.SIGNAL('clicked()'), self.zoomcluster)
+        QtCore.QObject.connect(self.ui.pushButton_32, QtCore.SIGNAL('clicked()'), self.hideTime)
+
 
         #Add listeners to radio buttons
         self.ui.radioButton_2.toggled.connect(self.clusterview)
@@ -138,7 +142,7 @@ class MainWindow(QtGui.QMainWindow):
         self.configureSpikeTrainPlot()
 
         self.ui.pushButton.setStyleSheet("QWidget { background-color : blue}")
-        self.ui.pushButton_9.setToolTip("Saves the flagged clusters in the current directory")
+        self.ui.pushButton_28.setToolTip("Saves the flagged clusters in the current directory")
 
 
     def configureSpatialmapPlot(self):
@@ -170,16 +174,16 @@ class MainWindow(QtGui.QMainWindow):
     def initbuttons(self):
         self.ui.checkbutt.setDisabled(True)
         self.ui.uncheckbutt.setDisabled(True)
-        self.ui.pushButton_3.setDisabled(True)
-        self.ui.pushButton_2.setDisabled(True)
-        self.ui.pushButton_10.setDisabled(True)
-        self.ui.pushButton_8.setDisabled(True)
-        self.ui.pushButton_9.setDisabled(True)
+        self.ui.pushButton_24.setDisabled(True)
+        self.ui.pushButton_29.setDisabled(True)
+        # self.ui.pushButton_10.setDisabled(True)
+        self.ui.pushButton_27.setDisabled(True)
+        self.ui.pushButton_28.setDisabled(True)
         self.ui.pushButton_5.setDisabled(True)
         self.ui.pushButton_6.setDisabled(True)
         self.ui.pushButton_7.setDisabled(True)
-        self.ui.pushButton_11.setDisabled(True)
-        self.ui.pushButton_12.setDisabled(True)
+        self.ui.pushButton_25.setDisabled(True)
+        self.ui.pushButton_26.setDisabled(True)
         self.ui.line_start.setDisabled(True)
         self.ui.line_end.setDisabled(True)
 
@@ -205,7 +209,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.line_start.setText(str(self.ct.mint/self.ct.sampling+0.0001))
         self.printEndLine(self.ct.maxt)
         self.ui.line_end.setText(str(self.ct.maxt/self.ct.sampling-0.0001))
-        self.ui.pushButton_2.setFocus()
+        self.ui.pushButton_29.setFocus()
 
 
 
@@ -229,15 +233,28 @@ class MainWindow(QtGui.QMainWindow):
     def hidewindow(self):
         #Hides the Spike train window
         if not self.ui.pushButton_4.isChecked():
+            # self.ui.groupBox_13.setVisible(True)
             self.ui.widget_11.setVisible(True)
             self.ui.widget_hold.setVisible(True)
             self.ui.pushButton_4.setText("Hide time window")
         else:
+            # self.ui.groupBox_13.setVisible(False)
             self.ui.widget_11.setVisible(False)
             self.ui.widget_hold.setVisible(False)
             self.ui.pushButton_4.setText("Show time window")
             self.ui.groupBox_2.update()
             self.ui.groupBox_2.repaint()
+
+    def hideTime(self):
+        if not self.ui.pushButton_32.isChecked():
+            self.ui.groupBox_15.setVisible(True)
+            self.ui.pushButton_32.setText("Hide")
+            self.ui.groupBox.update()
+            self.ui.groupBox.repaint()
+        else:
+            self.ui.groupBox_15.setVisible(False)
+            self.ui.pushButton_32.setText("Segment")
+
 
     def isNumber(self, x):
         isnum = True
@@ -250,11 +267,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def linestartevent(self, event):
         #When the start edit line is pressed the histogram will start listening for pressing button events.
-        self.linestart = self.ui.widget_4.canvas.mpl_connect('button_press_event', self.handleStart)
+        self.linestart = self.ui.widget_29.canvas.mpl_connect('button_press_event', self.handleStart)
 
     def lineendevent(self, event):
         #When the end edit line is pressed the histogram will start listening for pressing button events.
-        self.lineend = self.ui.widget_4.canvas.mpl_connect('button_press_event', self.handleEnd)
+        self.lineend = self.ui.widget_29.canvas.mpl_connect('button_press_event', self.handleEnd)
 
 
     def fillstartline(self, event):
@@ -278,7 +295,7 @@ class MainWindow(QtGui.QMainWindow):
             return
 
         self.printStartLine(x)
-        self.ui.widget_4.canvas.mpl_disconnect(self.linestart)
+        self.ui.widget_29.canvas.mpl_disconnect(self.linestart)
         self.linestart = None
 
 
@@ -291,7 +308,7 @@ class MainWindow(QtGui.QMainWindow):
             return
 
         self.printEndLine(x)
-        self.ui.widget_4.canvas.mpl_disconnect(self.lineend)
+        self.ui.widget_29.canvas.mpl_disconnect(self.lineend)
         self.lineend = None
 
 
@@ -302,8 +319,8 @@ class MainWindow(QtGui.QMainWindow):
             self.previousstartx = x
             if self.previousline is not None:
                 self.previousline.remove()
-            self.previousline = self.ui.widget_4.canvas.ax.vlines(x,[0],self.ct.getMaxTimeHistogram() + 10,lw=1, colors='green')
-            self.ui.widget_4.canvas.draw()
+            self.previousline = self.ui.widget_29.canvas.ax.vlines(x,[0],self.ct.getMaxTimeHistogram() + 10,lw=1, colors='green')
+            self.ui.widget_29.canvas.draw()
 
     def printEndLine(self, x):
         #Prints a red line in the time histogram at the position specified by x
@@ -311,14 +328,14 @@ class MainWindow(QtGui.QMainWindow):
             self.previousendx = x
             if self.previouslineend is not None:
                 self.previouslineend.remove()
-            self.previouslineend = self.ui.widget_4.canvas.ax.vlines(x,[0],self.ct.getMaxTimeHistogram() + 10,lw=1, colors='red')
-            self.ui.widget_4.canvas.draw()
+            self.previouslineend = self.ui.widget_29.canvas.ax.vlines(x,[0],self.ct.getMaxTimeHistogram() + 10,lw=1, colors='red')
+            self.ui.widget_29.canvas.draw()
 
 
     def handleStart(self,event):
         #When the user clicks on the time histogram and previously clicked on the start line, then it will print
         #a green line on the plot.
-        if self.ui.widget_4.ntb._active is None:
+        if self.ui.widget_29.ntb._active is None:
             if self.previousline is not None:
                 self.previousline.remove()
                 self.previousline = None
@@ -331,7 +348,7 @@ class MainWindow(QtGui.QMainWindow):
     def handleEnd(self,event):
         #When the user clicks on the time histogram and previously clicked on the end line, then it will print
         #a red line on the plot.
-        if self.ui.widget_4.ntb._active is None:
+        if self.ui.widget_29.ntb._active is None:
             if self.previouslineend is not None:
                 self.previouslineend.remove()
                 self.previouslineend = None
@@ -367,10 +384,10 @@ class MainWindow(QtGui.QMainWindow):
     def checkingDataFinal(self, textedit1, textedit2):
         #Validates the start and end time values
         if self.linestart is not None:
-            self.ui.widget_4.canvas.mpl_disconnect(self.linestart)
+            self.ui.widget_29.canvas.mpl_disconnect(self.linestart)
             self.linestart = None
         if self.lineend is not None:
-            self.ui.widget_4.canvas.mpl_disconnect(self.lineend)
+            self.ui.widget_29.canvas.mpl_disconnect(self.lineend)
             self.lineend = None
 
         if self.checkingData(textedit1):
@@ -500,8 +517,8 @@ class MainWindow(QtGui.QMainWindow):
         self.printLog("Filtering started...\n")
         self.ct.filterIndexes(self.timestart, self.timeend)
         self.printLog("Filtering finished...\n")
-        self.ui.pushButton_2.setDisabled(True)
-        self.ui.pushButton_10.setDisabled(True)
+        self.ui.pushButton_29.setDisabled(True)
+        # self.ui.pushButton_10.setDisabled(True)
         self.ui.pushButton_7.setDisabled(False)
 
         self.disableFilterControls(False)
@@ -854,10 +871,16 @@ class MainWindow(QtGui.QMainWindow):
 
     def select_file_raw(self):
         self.spikefile = QtGui.QFileDialog.getOpenFileName(self, "Open Data File", "", "HDF5 data files (*.hdf5)")
-        self.newSpikefile = self.spikefile
+        # self.newSpikefile = self.spikefile
         if self.spikefile:
             self.ui.line_raw.setText(self.spikefile)
             self.ui.line_raw.setToolTip(self.spikefile)
+            clustered = self.openfileraw()
+            print(clustered)
+            if clustered == "clustered":
+                self.alltime()
+                self.filterTime()
+                self.ui.pushButton_29.setDisabled(False)
 
     def openfileraw(self):
         #self.spikefile = 'C:\\Users\\user\\Documents\\MsCfiles\\data\\P29_16_05_14_retina02_left_stim2_smallarray_fullfield_SpkD45_v18_clustered.hdf5'
@@ -867,30 +890,39 @@ class MainWindow(QtGui.QMainWindow):
 
 
         try:
-            if self.newSpikefile:
-                clustered = self.ct.loadData(str(self.newSpikefile))
-                print(clustered)
-                print(str(self.newSpikefile))
-                if clustered == "false":
-                    self.printLog("Try press the Cluster button")
-                else:
+            if self.spikefile:
+                clustered = self.ct.loadData(str(self.spikefile))
+                # print(clustered)
+                # print(str(self.newSpikefile))
+                if clustered == "unclustered":
+                    self.printLog("Try pressing the Cluster button")
+                    return "unclustered"
+                elif clustered == "clustered":
                     self.ui.line_start.setDisabled(False)
                     self.ui.line_end.setDisabled(False)
-                    self.ui.pushButton_2.setDisabled(False)
-                    self.ui.pushButton_10.setDisabled(False)
+                    self.ui.pushButton_29.setDisabled(False)
+                    # self.ui.pushButton_10.setDisabled(False)
                     self.printLog("Data file has been loaded correctly")
+                    return "clustered"
+                else:
+                    self.printLog("incompatiable file")
+                    return "incompatiable"
             else:
                 self.printLog("An .hdf5 file must be provided using the Open File dialog.")
+                return "invalid"
         except ValueError:
             self.printLog(str(ValueError.message))
 
     def run_cluster(self):
         self.h = float(self.ui.line_h.text())
         self.alpha = float(self.ui.line_alpha.text())
-        result, fileName = self.ct.runCluster(str(self.spikefile), self.h, self.alpha)
-        if result and fileName:
-            self.newSpikefile = fileName
+        self.mbf = float(self.ui.line_mbf.text())
+        result = self.ct.runCluster(self.h, self.alpha, self.mbf)
+        if result:
+            # self.newSpikefile = fileName
             self.printLog(result)
+            self.alltime()
+            self.filterTime()
         else:
             self.printLog("Cluster unsuccessful")
 
@@ -909,22 +941,22 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def setAxisTimeWidget(self, minx, maxx, miny, maxy):
-        self.ui.widget_4.canvas.ax.set_xlim([minx, maxx])
-        self.ui.widget_4.canvas.ax.set_ylim([miny, maxy])
+        self.ui.widget_29.canvas.ax.set_xlim([minx, maxx])
+        self.ui.widget_29.canvas.ax.set_ylim([miny, maxy])
 
     def setTicksTimeWidget(self, xticks, yticks, xlabels = None, ylabels = None):
-        self.ui.widget_4.canvas.ax.set_xticks(xticks)
-        self.ui.widget_4.canvas.ax.set_yticks(yticks)
+        self.ui.widget_29.canvas.ax.set_xticks(xticks)
+        self.ui.widget_29.canvas.ax.set_yticks(yticks)
 
         if xlabels is not None:
-            self.ui.widget_4.canvas.ax.set_xticklabels(xlabels)
+            self.ui.widget_29.canvas.ax.set_xticklabels(xlabels)
         if ylabels is not None:
-            self.ui.widget_4.canvas.ax.set_yticklabels(ylabels)
+            self.ui.widget_29.canvas.ax.set_yticklabels(ylabels)
 
 
     def plotTimeWidget(self, x, y):
-        self.ui.widget_4.canvas.ax.plot(x,y)
-        self.ui.widget_4.canvas.draw()
+        self.ui.widget_29.canvas.ax.plot(x,y)
+        self.ui.widget_29.canvas.draw()
 
 
     def setAxisMainWidget(self, minx, maxx, miny, maxy):
@@ -1160,13 +1192,13 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def disableFilterControls(self, mode):
-        self.ui.pushButton_8.setDisabled(mode)
-        self.ui.pushButton_9.setDisabled(mode)
+        self.ui.pushButton_27.setDisabled(mode)
+        self.ui.pushButton_28.setDisabled(mode)
         self.ui.checkbutt.setDisabled(mode)
         self.ui.uncheckbutt.setDisabled(mode)
-        self.ui.pushButton_3.setDisabled(mode)
-        self.ui.pushButton_11.setDisabled(mode)
-        self.ui.pushButton_12.setDisabled(mode)
+        self.ui.pushButton_24.setDisabled(mode)
+        self.ui.pushButton_25.setDisabled(mode)
+        self.ui.pushButton_26.setDisabled(mode)
 
 
     def isCompletePCAView(self):
